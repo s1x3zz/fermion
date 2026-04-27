@@ -79,6 +79,14 @@
   gap: 10px;
   flex-shrink: 0;
 }
+.nav-user-email {
+  font-size: 0.82rem;
+  color: #8888a8;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ── Hero ───────────────────────────────────────────────────────────────── */
 .hero {

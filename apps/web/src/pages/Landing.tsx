@@ -1,5 +1,7 @@
 import { createSignal, onMount, onCleanup, For, Show } from 'solid-js'
-import { A } from '@solidjs/router'
+import { A, useSearchParams } from '@solidjs/router'
+import { useAuthStore } from '../stores/authStore'
+import { AuthModal } from '../components/AuthModal'
 import './landing.css'
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -70,9 +72,17 @@ const PLANS: Plan[] = [
   },
 ]
 
+const truncate = (s: string, max = 22) => (s.length > max ? s.slice(0, max - 1) + '…' : s)
+
 // ── Subcomponents ──────────────────────────────────────────────────────────────
 
-function Navbar() {
+interface NavbarProps {
+  onOpenModal: () => void
+}
+
+function Navbar(props: NavbarProps) {
+  const auth = useAuthStore()
+
   return (
     <nav class="nav">
       <div class="nav-inner l-inner">
@@ -86,15 +96,42 @@ function Navbar() {
           <li><a href="#">Blog</a></li>
         </ul>
         <div class="nav-actions">
-          <a href="#" class="btn btn-outline btn-sm">Log in</a>
-          <a href="#" class="btn btn-primary btn-sm">Start free</a>
+          <Show
+            when={auth.user()}
+            fallback={
+              <>
+                <button
+                  class="btn btn-outline btn-sm"
+                  onClick={props.onOpenModal}
+                >
+                  Log in
+                </button>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onClick={props.onOpenModal}
+                >
+                  Start free
+                </button>
+              </>
+            }
+          >
+            <span class="nav-user-email">
+              {truncate(auth.user()?.email ?? 'User')}
+            </span>
+            <button
+              class="btn btn-outline btn-sm"
+              onClick={() => void auth.signOut()}
+            >
+              Sign out
+            </button>
+          </Show>
         </div>
       </div>
     </nav>
   )
 }
 
-function Hero() {
+function Hero(props: { onOpenModal: () => void }) {
   return (
     <section class="hero">
       <div class="l-inner">
@@ -112,7 +149,7 @@ function Hero() {
         </p>
         <div class="hero-actions">
           <A href="/sim" class="btn btn-primary">Open simulator</A>
-          <a href="#features" class="btn btn-outline">View examples</a>
+          <button class="btn btn-outline" onClick={props.onOpenModal}>Sign up free</button>
         </div>
       </div>
     </section>
@@ -129,11 +166,9 @@ function PreviewFrame() {
       const vh = window.innerHeight
       const frameCenter = rect.top + rect.height / 2
       const dist = Math.abs(frameCenter - vh / 2)
-      // Opacity peaks at 0.6 when frame centre aligns with viewport centre
       const raw = Math.max(0, 1 - dist / (vh * 0.9))
       setGlowOpacity(parseFloat((raw * 0.6).toFixed(3)))
     }
-
     window.addEventListener('scroll', update, { passive: true })
     update()
     onCleanup(() => window.removeEventListener('scroll', update))
@@ -145,9 +180,7 @@ function PreviewFrame() {
         <div
           ref={frameRef}
           class="preview-frame"
-          style={{
-            'box-shadow': `0 24px 80px 16px rgba(59, 139, 255, ${glowOpacity()})`,
-          }}
+          style={{ 'box-shadow': `0 24px 80px 16px rgba(59, 139, 255, ${glowOpacity()})` }}
         >
           <div class="preview-inner">
             <span class="preview-label">Simulator canvas — live preview coming soon</span>
@@ -169,9 +202,7 @@ function Features() {
           <For each={FEATURES}>
             {(f) => (
               <div class="feature-card">
-                <div class="feature-icon">
-                  <div class="feature-icon-dot" />
-                </div>
+                <div class="feature-icon"><div class="feature-icon-dot" /></div>
                 <h3 class="feature-title">{f.title}</h3>
                 <p class="feature-desc">{f.desc}</p>
               </div>
@@ -183,7 +214,7 @@ function Features() {
   )
 }
 
-function Pricing() {
+function Pricing(props: { onOpenModal: () => void }) {
   return (
     <section class="section" id="pricing">
       <div class="l-inner">
@@ -209,17 +240,15 @@ function Pricing() {
                 </div>
                 <hr class="plan-divider" />
                 <ul class="plan-features">
-                  <For each={plan.features}>
-                    {(feat) => <li>{feat}</li>}
-                  </For>
+                  <For each={plan.features}>{(feat) => <li>{feat}</li>}</For>
                 </ul>
                 <div class="plan-cta">
-                  <a
-                    href="#"
+                  <button
                     class={`btn ${plan.featured ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={props.onOpenModal}
                   >
                     {plan.cta}
-                  </a>
+                  </button>
                 </div>
               </div>
             )}
@@ -248,16 +277,36 @@ function Footer() {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export function Landing() {
+  const [showModal, setShowModal] = createSignal(false)
+  const [searchParams] = useSearchParams<{ login?: string; error?: string }>()
+  const auth = useAuthStore()
+
+  // Auto-open modal when redirected from ProtectedRoute (?login=1)
+  onMount(() => {
+    if (searchParams.login === '1') setShowModal(true)
+  })
+
+  const openModal = () => setShowModal(true)
+  const closeModal = () => setShowModal(false)
+
   return (
     <>
-      <Navbar />
+      <Navbar onOpenModal={openModal} />
       <main>
-        <Hero />
+        <Hero onOpenModal={openModal} />
         <PreviewFrame />
         <Features />
-        <Pricing />
+        <Pricing onOpenModal={openModal} />
       </main>
       <Footer />
+
+      {/* Auth modal via Portal */}
+      <Show when={showModal()}>
+        <AuthModal
+          onClose={closeModal}
+          initialError={searchParams.error}
+        />
+      </Show>
     </>
   )
 }

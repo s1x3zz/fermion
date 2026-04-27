@@ -1,6 +1,6 @@
 import { onMount, onCleanup } from 'solid-js'
 import * as THREE from 'three'
-import { useCameraController, WireRenderer, SignalType } from '@fermion/renderer'
+import { useCameraController, WireRenderer, SignalType, Breadboard } from '@fermion/renderer'
 
 export function Scene() {
   let canvasRef!: HTMLCanvasElement
@@ -23,7 +23,7 @@ export function Scene() {
 
     // ── Camera ────────────────────────────────────────────────────────────
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 1000)
-    camera.position.set(5, 5, 5)
+    camera.position.set(0, 8, 12)
     camera.lookAt(0, 0, 0)
 
     // ── Lights ────────────────────────────────────────────────────────────
@@ -40,40 +40,29 @@ export function Scene() {
     const grid = new THREE.GridHelper(20, 20, 0x1a1a2e, 0x1a1a2e)
     scene.add(grid)
 
-    // ── Cube ──────────────────────────────────────────────────────────────
-    const cubeGeo = new THREE.BoxGeometry(1, 1, 1)
-    const cubeMat = new THREE.MeshStandardMaterial({
-      color: 0x1a3a5c,
-      emissive: 0x0a1f3a,
-      emissiveIntensity: 0.6,
-      roughness: 0.4,
-      metalness: 0.3,
-    })
-    const cube = new THREE.Mesh(cubeGeo, cubeMat)
-    cube.position.set(0, 0.5, 0)
-    cube.castShadow = true
-    scene.add(cube)
+    // ── Breadboard ────────────────────────────────────────────────────────
+    const board = new Breadboard(scene, new THREE.Vector3(0, 0, 0))
 
     // ── Wire renderer ─────────────────────────────────────────────────────
     const wires = new WireRenderer(scene)
 
     wires.addWire('vcc', {
-      pinA: new THREE.Vector3(-1, 0, -1),
-      pinB: new THREE.Vector3(1, 0, 1),
+      pinA: board.getPowerRailPosition('vcc_top', 1),
+      pinB: board.getPowerRailPosition('vcc_top', 25),
       signalType: SignalType.VCC_5V,
     })
     wires.updateCurrent('vcc', 0.8)
 
     wires.addWire('gnd', {
-      pinA: new THREE.Vector3(-1, 0, 1),
-      pinB: new THREE.Vector3(1, 0, -1),
+      pinA: board.getPowerRailPosition('gnd_top', 1),
+      pinB: board.getPowerRailPosition('gnd_top', 25),
       signalType: SignalType.GND,
     })
     wires.updateCurrent('gnd', 0.8)
 
     wires.addWire('data', {
-      pinA: new THREE.Vector3(0, 0, -1.5),
-      pinB: new THREE.Vector3(0, 0, 1.5),
+      pinA: board.getPinPosition('a', 1),
+      pinB: board.getPinPosition('e', 1),
       signalType: SignalType.DIGITAL,
     })
     wires.updateCurrent('data', 0.3)
@@ -117,10 +106,9 @@ export function Scene() {
     onCleanup(() => {
       cancelAnimationFrame(rafId)
       window.removeEventListener('resize', onResize)
+      board.dispose()
       wires.dispose()
       renderer.dispose()
-      cubeGeo.dispose()
-      cubeMat.dispose()
     })
   })
 

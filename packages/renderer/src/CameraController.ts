@@ -48,6 +48,7 @@ export class CameraController {
 
   private isDragging = false
   private isPanning = false
+  private activeButton = -1
   private lastPointer = new Vector2()
 
   private velocityTheta = 0
@@ -116,11 +117,17 @@ export class CameraController {
   private _onContextMenu = (e: Event) => e.preventDefault()
 
   private _onMouseDown = (e: MouseEvent) => {
-    if (e.button !== 1) return // middle mouse only
+    if (e.button === 0) {
+      this.isDragging = true
+      this.isPanning = false
+    } else if (e.button === 1 || e.button === 2) {
+      this.isPanning = true
+      this.isDragging = false
+    } else {
+      return
+    }
     e.preventDefault()
-    const isShift = e.shiftKey
-    this.isDragging = !isShift
-    this.isPanning = isShift
+    this.activeButton = e.button
     this.lastPointer.set(e.clientX, e.clientY)
     this.velocityTheta = 0
     this.velocityPhi = 0
@@ -149,9 +156,10 @@ export class CameraController {
   }
 
   private _onMouseUp = (e: MouseEvent) => {
-    if (e.button !== 1) return
+    if (e.button !== this.activeButton) return
     this.isDragging = false
     this.isPanning = false
+    this.activeButton = -1
   }
 
   private _onWheel = (e: WheelEvent) => {

@@ -1,6 +1,6 @@
 import { onMount, onCleanup } from 'solid-js'
 import * as THREE from 'three'
-import { useCameraController } from '@fermion/renderer'
+import { useCameraController, WireRenderer, SignalType } from '@fermion/renderer'
 
 export function Scene() {
   let canvasRef!: HTMLCanvasElement
@@ -54,6 +54,30 @@ export function Scene() {
     cube.castShadow = true
     scene.add(cube)
 
+    // ── Wire renderer ─────────────────────────────────────────────────────
+    const wires = new WireRenderer(scene)
+
+    wires.addWire('vcc', {
+      pinA: new THREE.Vector3(-1, 0, -1),
+      pinB: new THREE.Vector3(1, 0, 1),
+      signalType: SignalType.VCC_5V,
+    })
+    wires.updateCurrent('vcc', 0.8)
+
+    wires.addWire('gnd', {
+      pinA: new THREE.Vector3(-1, 0, 1),
+      pinB: new THREE.Vector3(1, 0, -1),
+      signalType: SignalType.GND,
+    })
+    wires.updateCurrent('gnd', 0.8)
+
+    wires.addWire('data', {
+      pinA: new THREE.Vector3(0, 0, -1.5),
+      pinB: new THREE.Vector3(0, 0, 1.5),
+      signalType: SignalType.DIGITAL,
+    })
+    wires.updateCurrent('data', 0.3)
+
     // ── Camera controller ─────────────────────────────────────────────────
     const controller = useCameraController(camera, canvasRef, scene, {
       dampingFactor: 0.08,
@@ -64,15 +88,18 @@ export function Scene() {
 
     // ── Animation loop ────────────────────────────────────────────────────
     let rafId = 0
-    let lastTime = performance.now()
+    const startTime = performance.now()
+    let lastTime = startTime
 
     const tick = () => {
       rafId = requestAnimationFrame(tick)
       const now = performance.now()
       const delta = (now - lastTime) / 1000
+      const elapsed = (now - startTime) / 1000
       lastTime = now
 
       controller.update(delta)
+      wires.update(elapsed)
       renderer.render(scene, camera)
     }
     tick()
@@ -90,6 +117,7 @@ export function Scene() {
     onCleanup(() => {
       cancelAnimationFrame(rafId)
       window.removeEventListener('resize', onResize)
+      wires.dispose()
       renderer.dispose()
       cubeGeo.dispose()
       cubeMat.dispose()

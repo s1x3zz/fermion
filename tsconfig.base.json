@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "paths": {
+      "@fermion/core": ["./packages/core/src/index.ts"],
+      "@fermion/solver": ["./packages/solver/src/index.ts"],
+      "@fermion/renderer": ["./packages/renderer/src/index.ts"],
+      "@fermion/ui": ["./packages/ui/src/index.ts"]
+    }
+  }
+}

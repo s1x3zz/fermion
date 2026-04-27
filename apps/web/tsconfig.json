@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@fermion/core": ["../../packages/core/src/index.ts"],
+      "@fermion/renderer": ["../../packages/renderer/src/index.ts"],
+      "@fermion/ui": ["../../packages/ui/src/index.ts"],
+      "@fermion/solver": ["../../packages/solver/src/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

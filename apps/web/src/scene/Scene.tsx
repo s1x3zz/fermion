@@ -6,6 +6,13 @@ export function Scene() {
   let canvasRef!: HTMLCanvasElement
 
   onMount(() => {
+    // Lock scroll while simulator is active
+    const htmlEl = document.documentElement
+    const bodyEl = document.body
+    htmlEl.style.height = '100%'
+    bodyEl.style.height = '100%'
+    bodyEl.style.overflow = 'hidden'
+
     // ── Renderer ──────────────────────────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef,
@@ -109,6 +116,9 @@ export function Scene() {
       board.dispose()
       wires.dispose()
       renderer.dispose()
+      htmlEl.style.height = ''
+      bodyEl.style.height = ''
+      bodyEl.style.overflow = ''
     })
   })
 

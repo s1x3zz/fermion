@@ -32,6 +32,9 @@ importers:
       '@fermion/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@solidjs/router':
+        specifier: ^0.16.1
+        version: 0.16.1(solid-js@1.9.12)
       dexie:
         specifier: ^4.0.11
         version: 4.4.2
@@ -564,6 +567,11 @@ packages:
     resolution: {integrity: sha512-Nd/SgG27WoA9e+/TdK74KnHz852TLa94ovOYySo/yMPuTmpckK/jIF2jSwS3g7ELSKXK13/cVdmg1Z/DaCWKxA==}
     cpu: [x64]
     os: [win32]
+
+  '@solidjs/router@0.16.1':
+    resolution: {integrity: sha512-IhyjedgC6LRpw/8CPGGI89FrV+r0xTHzOl2c4CRyzYQ1bLepJxbVI1LLKvsavMWY5TRBRacV7hAeOhuTXkjiqg==}
+    peerDependencies:
+      solid-js: ^1.8.6
 
   '@turbo/darwin-64@2.9.6':
     resolution: {integrity: sha512-X/56SnVXIQZBLKwniGTwEQTGmtE5brSACnKMBWpY3YafuxVYefrC2acamfjgxP7BG5w3I+6jf0UrLoSzgPcSJg==}
@@ -1627,6 +1635,10 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.60.2':
     optional: true
+
+  '@solidjs/router@0.16.1(solid-js@1.9.12)':
+    dependencies:
+      solid-js: 1.9.12
 
   '@turbo/darwin-64@2.9.6':
     optional: true

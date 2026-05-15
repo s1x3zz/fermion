@@ -1153,6 +1153,14 @@
   margin: 0;
 }
 
+.testi-disclaimer {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: #3d3d5c;
+  text-align: center;
+  margin: 28px auto 0;
+}
+
 /* ── CTA section ─────────────────────────────────────────────────────────────── */
 .cta-section {
   position: relative;
@@ -1244,6 +1252,27 @@
   color: var(--text-lo);
   margin: 10px 0 0;
 }
+
+.footer-social {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.footer-gh,
+.footer-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-lo);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-gh:hover,
+.footer-email:hover { color: var(--text-hi); }
 
 .footer-cols {
   display: flex;

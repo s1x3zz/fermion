@@ -2,6 +2,7 @@ import { createSignal, onMount, onCleanup, For, Show } from 'solid-js'
 import { A, useSearchParams, useNavigate } from '@solidjs/router'
 import { useAuthStore } from '../stores/authStore'
 import { AuthModal } from '../components/AuthModal'
+import { toast, ToastContainer } from '../components/ui/Toast'
 import './landing.css'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -499,7 +500,7 @@ function SolverMetrics() {
 
 // ── Navbar ─────────────────────────────────────────────────────────────────────
 
-function Navbar(props: { onOpenModal: () => void }) {
+function Navbar(props: { onOpenLogin: () => void; onOpenSignup: () => void }) {
   const auth = useAuthStore()
   return (
     <nav class="nav">
@@ -510,16 +511,13 @@ function Navbar(props: { onOpenModal: () => void }) {
         </a>
         <ul class="nav-links">
           <li>
-            <a href="#features">Simulations</a>
-          </li>
-          <li>
-            <a href="#features">Components</a>
+            <a href="#features">Features</a>
           </li>
           <li>
             <a href="#pricing">Pricing</a>
           </li>
           <li>
-            <a href="#">Docs</a>
+            <a href={`mailto:fermiondev.io@gmail.com`}>Contact</a>
           </li>
         </ul>
         <div class="nav-ctas">
@@ -527,10 +525,10 @@ function Navbar(props: { onOpenModal: () => void }) {
             when={auth.user()}
             fallback={
               <>
-                <button class="btn btn-ghost btn-sm" onClick={props.onOpenModal}>
+                <button class="btn btn-ghost btn-sm" onClick={props.onOpenLogin}>
                   Log in
                 </button>
-                <button class="btn btn-primary btn-sm" onClick={props.onOpenModal}>
+                <button class="btn btn-primary btn-sm" onClick={props.onOpenSignup}>
                   Start free
                 </button>
               </>
@@ -552,7 +550,7 @@ function Navbar(props: { onOpenModal: () => void }) {
 
 // ── Hero ───────────────────────────────────────────────────────────────────────
 
-function Hero(props: { onOpenModal: () => void }) {
+function Hero(props: { onOpenSignup: () => void }) {
   const auth = useAuthStore()
   const navigate = useNavigate()
 
@@ -582,7 +580,7 @@ function Hero(props: { onOpenModal: () => void }) {
             {auth.user() ? 'Go to Dashboard' : 'Open simulator'}
           </button>
           <Show when={!auth.user()}>
-            <button class="btn btn-outline btn-lg" onClick={props.onOpenModal}>
+            <button class="btn btn-outline btn-lg" onClick={props.onOpenSignup}>
               Sign up free
             </button>
           </Show>
@@ -901,7 +899,16 @@ function Demo() {
 
 // ── Pricing ────────────────────────────────────────────────────────────────────
 
-function Pricing(props: { onOpenModal: () => void }) {
+function Pricing(props: { onOpenSignup: () => void }) {
+  const navigate = useNavigate()
+
+  const handlePlanClick = (plan: Plan) => {
+    if (plan.name === 'No login') navigate('/sim?guest=true')
+    else if (plan.name === 'Free') props.onOpenSignup()
+    else if (plan.name === 'Pro') toast.info('Payments coming soon — join the waitlist!')
+    else window.location.href = 'mailto:fermiondev.io@gmail.com'
+  }
+
   return (
     <section class="section section-pricing" id="pricing">
       <PricingWaveCanvas />
@@ -936,7 +943,7 @@ function Pricing(props: { onOpenModal: () => void }) {
                 </ul>
                 <button
                   class={`btn plan-btn${plan.featured ? ' btn-primary' : ' btn-outline'}`}
-                  onClick={props.onOpenModal}
+                  onClick={() => handlePlanClick(plan)}
                 >
                   {plan.cta}
                 </button>
@@ -957,7 +964,7 @@ function Testimonials() {
       <div class="l-inner">
         <div class="section-head centered reveal">
           <p class="section-label">Testimonials</p>
-          <h2 class="section-title">Trusted by engineers</h2>
+          <h2 class="section-title">Early feedback</h2>
         </div>
         <div class="testi-grid">
           <For each={TESTIMONIALS}>
@@ -975,6 +982,7 @@ function Testimonials() {
             )}
           </For>
         </div>
+        <p class="testi-disclaimer">Early feedback from beta testers.</p>
       </div>
     </section>
   )
@@ -991,7 +999,7 @@ function CTA(props: { onOpenModal: () => void }) {
       <div class="l-inner cta-inner reveal">
         <p class="section-label">Get started</p>
         <h2 class="cta-title">Ready to simulate?</h2>
-        <p class="cta-sub">Join thousands of engineers building faster with Fermion.</p>
+        <p class="cta-sub">Drag, connect, and simulate — right in your browser.</p>
         <button
           class="btn btn-primary btn-cta"
           onClick={() => (auth.user() ? navigate('/dashboard') : props.onOpenModal())}
@@ -1016,25 +1024,42 @@ function Footer() {
             <span class="logo-b">mion</span>
           </a>
           <p class="footer-tag">Real-time 3D circuit simulation in your browser.</p>
+          <div class="footer-social">
+            <a
+              href="https://github.com/s1x3zz/fermion"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-gh"
+              aria-label="GitHub"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              GitHub
+            </a>
+            <a href="mailto:fermiondev.io@gmail.com" class="footer-email">
+              fermiondev.io@gmail.com
+            </a>
+          </div>
         </div>
         <div class="footer-cols">
           <div class="footer-col">
             <p class="fc-h">Product</p>
-            <a href="#features">Simulations</a>
-            <a href="#features">Components</a>
+            <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
+            <A href="/sim?guest=true">Try simulator</A>
           </div>
           <div class="footer-col">
-            <p class="fc-h">Resources</p>
-            <a href="#">Docs</a>
-            <a href="#">Blog</a>
-            <a href="#">Changelog</a>
+            <p class="fc-h">Legal</p>
+            <A href="/privacy">Privacy</A>
+            <A href="/terms">Terms</A>
           </div>
           <div class="footer-col">
-            <p class="fc-h">Company</p>
-            <a href="#">About</a>
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
+            <p class="fc-h">Contact</p>
+            <a href="mailto:fermiondev.io@gmail.com">Email us</a>
+            <a href="https://github.com/s1x3zz/fermion" target="_blank" rel="noopener noreferrer">
+              GitHub
+            </a>
           </div>
         </div>
       </div>
@@ -1047,36 +1072,40 @@ function Footer() {
 
 export function Landing() {
   const [showModal, setShowModal] = createSignal(false)
+  const [modalTab, setModalTab] = createSignal<'login' | 'signup'>('signup')
   const [searchParams] = useSearchParams<{ login?: string; error?: string }>()
 
   useRevealObserver()
 
   onMount(() => {
-    if (searchParams.login === '1') setShowModal(true)
+    if (searchParams.login === '1') { setModalTab('login'); setShowModal(true) }
   })
 
-  const open = () => setShowModal(true)
+  const openLogin = () => { setModalTab('login'); setShowModal(true) }
+  const openSignup = () => { setModalTab('signup'); setShowModal(true) }
   const close = () => setShowModal(false)
 
   return (
     <>
-      <Navbar onOpenModal={open} />
+      <Navbar onOpenLogin={openLogin} onOpenSignup={openSignup} />
       <main>
-        <Hero onOpenModal={open} />
+        <Hero onOpenSignup={openSignup} />
         <Marquee />
         <BentoGrid />
         <Demo />
-        <Pricing onOpenModal={open} />
+        <Pricing onOpenSignup={openSignup} />
         <Testimonials />
-        <CTA onOpenModal={open} />
+        <CTA onOpenModal={openSignup} />
       </main>
       <Footer />
       <Show when={showModal()}>
         <AuthModal
           onClose={close}
+          initialTab={modalTab()}
           {...(searchParams.error !== undefined ? { initialError: searchParams.error } : {})}
         />
       </Show>
+      <ToastContainer />
     </>
   )
 }

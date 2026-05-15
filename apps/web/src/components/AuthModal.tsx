@@ -6,6 +6,7 @@ import './auth-modal.css'
 interface AuthModalProps {
   onClose: () => void
   initialError?: string
+  initialTab?: 'login' | 'signup'
 }
 
 // Inline Google "G" SVG — no external asset needed
@@ -34,7 +35,7 @@ function GoogleIcon() {
 
 export function AuthModal(props: AuthModalProps) {
   const auth = useAuthStore()
-  const [tab, setTab] = createSignal<'login' | 'signup'>('login')
+  const [tab, setTab] = createSignal<'login' | 'signup'>(props.initialTab ?? 'login')
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
   const [loading, setLoading] = createSignal(false)

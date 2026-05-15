@@ -508,25 +508,182 @@ function BentoGrid() {
   )
 }
 
-// ── Demo ───────────────────────────────────────────────────────────────────────
+// ── Comparison Slider ──────────────────────────────────────────────────────────
+
+function SchematicView() {
+  return (
+    <div class="cmp-schem-wrap">
+      <svg viewBox="0 0 360 180" class="cmp-schem-svg" aria-hidden="true">
+        <defs>
+          <pattern id="sg" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="10" cy="10" r="0.7" fill="#12123a" />
+          </pattern>
+        </defs>
+        <rect width="360" height="180" fill="#04040e" />
+        <rect width="360" height="180" fill="url(#sg)" />
+
+        {/* Static wire frame (dim) */}
+        <polyline points="50,73 50,40 100,40 175,40 205,40 248,40 310,40 310,140 50,140 50,107"
+          fill="none" stroke="#0e1430" stroke-width="2" />
+        <polyline points="50,107 50,73" fill="none" stroke="#0e1430" stroke-width="2" />
+
+        {/* Animated current — rendered BEFORE component symbols so they mask it */}
+        <polyline
+          class="schem-current"
+          points="50,73 50,40 100,40 175,40 205,40 248,40 310,40 310,140 50,140 50,107"
+          fill="none"
+          stroke="#3b8bff"
+          stroke-width="2"
+          stroke-dasharray="10 16"
+          opacity="0.9"
+        />
+
+        {/* Battery — two-cell symbol */}
+        <line x1="35" y1="73" x2="65" y2="73" stroke="#3b8bff" stroke-width="3" />
+        <line x1="41" y1="82" x2="59" y2="82" stroke="#3b8bff" stroke-width="1.6" />
+        <line x1="35" y1="97" x2="65" y2="97" stroke="#3b8bff" stroke-width="3" />
+        <line x1="41" y1="106" x2="59" y2="106" stroke="#3b8bff" stroke-width="1.6" />
+        <text x="68" y="77" font-size="9" fill="#3b8bff">+</text>
+        <text x="68" y="111" font-size="9" fill="#3b8bff">−</text>
+        <text x="5" y="87" font-family="monospace" font-size="8" fill="#6060a0">V1</text>
+        <text x="3" y="100" font-family="monospace" font-size="9" fill="#4a70c8">5V</text>
+
+        {/* Resistor — rectangle body */}
+        <rect x="100" y="32" width="75" height="16" rx="2"
+          fill="#060614" stroke="#3b8bff" stroke-width="1.3" opacity="0.9" />
+        <text x="114" y="63" font-family="monospace" font-size="8" fill="#3b8bff">R1</text>
+        <text x="104" y="74" font-family="monospace" font-size="7.5" fill="#505090">330Ω</text>
+
+        {/* LED — diode symbol (triangle + bar) */}
+        <polygon points="205,24 205,56 248,40"
+          fill="#060614" stroke="#3b8bff" stroke-width="1.3" stroke-linejoin="round" />
+        <line x1="248" y1="24" x2="248" y2="56" stroke="#3b8bff" stroke-width="2.4" />
+        <circle cx="248" cy="40" r="9" fill="rgba(59,139,255,0.1)" class="schem-led-glow" />
+        <line x1="253" y1="28" x2="261" y2="20" stroke="#3b8bff" stroke-width="1" opacity="0.55" />
+        <line x1="258" y1="35" x2="267" y2="29" stroke="#3b8bff" stroke-width="1" opacity="0.55" />
+        <text x="216" y="68" font-family="monospace" font-size="8" fill="#3b8bff">LED</text>
+        <text x="206" y="78" font-family="monospace" font-size="7.5" fill="#505090">Vf=1.8V</text>
+
+        {/* Junction dots */}
+        <circle cx="50" cy="40" r="3.5" fill="#3b8bff" opacity="0.65" />
+        <circle cx="50" cy="140" r="3.5" fill="#3b8bff" opacity="0.65" />
+        <circle cx="310" cy="40" r="3.5" fill="#3b8bff" opacity="0.65" />
+        <circle cx="310" cy="140" r="3.5" fill="#3b8bff" opacity="0.65" />
+      </svg>
+    </div>
+  )
+}
+
+function View3D() {
+  return (
+    <div class="cmp-3d-wrap">
+      <div class="v3d-bg" />
+      <div class="v3d-main">
+        <div class="v3d-stage">
+          {/* Battery */}
+          <div class="v3d-comp">
+            <div class="v3d-bat">
+              <span class="v3d-bat-plus">+</span>
+              <span class="v3d-bat-minus">−</span>
+            </div>
+            <p class="v3d-lbl">V1 · 5V</p>
+          </div>
+          {/* Wire: battery → resistor */}
+          <div class="v3d-wire-seg">
+            <span class="v3d-ptcl" />
+            <span class="v3d-ptcl" style="animation-delay:0.83s" />
+            <span class="v3d-ptcl" style="animation-delay:1.67s" />
+          </div>
+          {/* Resistor */}
+          <div class="v3d-comp">
+            <div class="v3d-res">
+              <span class="v3d-band" style="background:#d97706" />
+              <span class="v3d-band" style="background:#2a2a2a" />
+              <span class="v3d-band" style="background:#d97706" />
+            </div>
+            <p class="v3d-lbl">R1 · 330Ω</p>
+          </div>
+          {/* Wire: resistor → LED */}
+          <div class="v3d-wire-seg">
+            <span class="v3d-ptcl" style="animation-delay:0.42s" />
+            <span class="v3d-ptcl" style="animation-delay:1.25s" />
+            <span class="v3d-ptcl" style="animation-delay:2.08s" />
+          </div>
+          {/* LED */}
+          <div class="v3d-comp">
+            <div class="v3d-led" />
+            <p class="v3d-lbl">LED</p>
+          </div>
+        </div>
+      </div>
+      {/* Inspector panel */}
+      <div class="v3d-panel">
+        <p class="v3d-panel-title">Inspector</p>
+        <div class="v3d-row">
+          <span class="v3d-key">Node A</span>
+          <span class="v3d-val">5.00 V</span>
+        </div>
+        <div class="v3d-row">
+          <span class="v3d-key">I(R1)</span>
+          <span class="v3d-val">9.7 mA</span>
+        </div>
+        <div class="v3d-row">
+          <span class="v3d-key">Vf</span>
+          <span class="v3d-val">1.8 V</span>
+        </div>
+        <div class="v3d-row">
+          <span class="v3d-key">Status</span>
+          <span class="v3d-val v3d-ok">CONVERGED</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function Demo() {
-  let frameRef!: HTMLDivElement
-  const [glow, setGlow] = createSignal(0)
-  let rmScroll = () => {}
+  const [pos, setPos] = createSignal(10)
+  let containerRef!: HTMLDivElement
+  let dragging = false
+  let live = true
+
+  const clamp = (v: number) => Math.max(2, Math.min(98, v))
+
+  const getRelPos = (clientX: number) => {
+    const rect = containerRef.getBoundingClientRect()
+    return clamp(((clientX - rect.left) / rect.width) * 100)
+  }
+
+  const onMouseMove = (e: MouseEvent) => { if (dragging) setPos(getRelPos(e.clientX)) }
+  const onMouseUp = () => { dragging = false }
+  const onTouchMove = (e: TouchEvent) => {
+    if (dragging && e.touches[0]) setPos(getRelPos(e.touches[0]!.clientX))
+  }
+  const onTouchEnd = () => { dragging = false }
 
   onMount(() => {
-    const update = () => {
-      const r = frameRef.getBoundingClientRect()
-      const mid = r.top + r.height / 2
-      const raw = Math.max(0, 1 - Math.abs(mid - window.innerHeight / 2) / (window.innerHeight * 0.9))
-      setGlow(parseFloat((raw * 0.42).toFixed(3)))
+    // Intro animation: 10% → 50% over 1.5s (hints at interactivity)
+    const t0 = performance.now()
+    const tick = (now: number) => {
+      if (!live) return
+      const p = Math.min(1, (now - t0) / 1500)
+      setPos(10 + 40 * (1 - Math.pow(1 - p, 3)))
+      if (p < 1) requestAnimationFrame(tick)
     }
-    window.addEventListener('scroll', update, { passive: true })
-    rmScroll = () => window.removeEventListener('scroll', update)
-    update()
+    requestAnimationFrame(tick)
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('touchend', onTouchEnd)
   })
-  onCleanup(() => rmScroll())
+
+  onCleanup(() => {
+    live = false
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+    window.removeEventListener('touchmove', onTouchMove)
+    window.removeEventListener('touchend', onTouchEnd)
+  })
 
   return (
     <section class="section">
@@ -535,59 +692,35 @@ function Demo() {
           <p class="section-label">Interactive Demo</p>
           <h2 class="section-title">The simulator, live</h2>
           <p class="section-sub centered-sub">
-            Every component renders in real-time 3D. Current flows as you build.
+            Drag the divider to compare the 2D schematic and 3D simulation views.
           </p>
         </div>
-        <div
-          ref={frameRef}
-          class="browser-frame reveal"
-          style={{ 'box-shadow': `0 0 80px 18px rgba(59,139,255,${glow()})` }}
-        >
-          <div class="browser-bar">
-            <div class="browser-dots">
-              <span />
-              <span />
-              <span />
-            </div>
-            <div class="browser-url">
-              <span>fermion.io/sim</span>
-            </div>
+        <div ref={containerRef} class="cmp-wrap reveal">
+          {/* Left panel — 2D schematic */}
+          <div
+            class="cmp-panel cmp-left"
+            style={{ 'clip-path': `inset(0 ${(100 - pos()).toFixed(2)}% 0 0)` }}
+          >
+            <div class="cmp-label cmp-label-l">Schematic</div>
+            <SchematicView />
           </div>
-          <div class="browser-body">
-            <div class="sim-bg" />
-            <div class="sim-stage">
-              <div class="sim-node" style="top:33%;left:18%">
-                <div class="sim-led-b" />
-                <p class="sim-lbl">LED1</p>
-              </div>
-              <div class="sim-node" style="top:53%;left:46%">
-                <div class="sim-res" />
-                <p class="sim-lbl">R1=220Ω</p>
-              </div>
-              <div class="sim-node" style="top:33%;left:70%">
-                <div class="sim-led-v" />
-                <p class="sim-lbl">LED2</p>
-              </div>
-              <div class="sim-wire" style="top:33%;left:18%;width:52%" />
-            </div>
-            <div class="sim-panel">
-              <p class="sim-panel-title">Inspector</p>
-              <div class="sim-row">
-                <span class="sk">Node A</span>
-                <span class="sv">5.00 V</span>
-              </div>
-              <div class="sim-row">
-                <span class="sk">Node B</span>
-                <span class="sv">1.68 V</span>
-              </div>
-              <div class="sim-row">
-                <span class="sk">I(R1)</span>
-                <span class="sv">15.1 mA</span>
-              </div>
-              <div class="sim-row">
-                <span class="sk">Status</span>
-                <span class="sv sim-ok">CONVERGED</span>
-              </div>
+          {/* Right panel — 3D simulation */}
+          <div
+            class="cmp-panel cmp-right"
+            style={{ 'clip-path': `inset(0 0 0 ${pos().toFixed(2)}%)` }}
+          >
+            <div class="cmp-label cmp-label-r">3D Simulation</div>
+            <View3D />
+          </div>
+          {/* Divider */}
+          <div class="cmp-divider" style={{ left: `${pos().toFixed(2)}%` }}>
+            <div class="cmp-line" />
+            <div
+              class="cmp-handle"
+              onMouseDown={() => { dragging = true }}
+              onTouchStart={() => { dragging = true }}
+            >
+              ↔
             </div>
           </div>
         </div>

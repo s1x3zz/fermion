@@ -17,6 +17,8 @@
     "@fermion/ui": "workspace:*",
     "@solidjs/router": "^0.16.1",
     "@supabase/supabase-js": "^2.104.1",
+    "avr8js": "^0.21.0",
+    "comlink": "^4.4.2",
     "dexie": "^4.0.11",
     "immer": "^10.1.1",
     "solid-js": "^1.9.5",

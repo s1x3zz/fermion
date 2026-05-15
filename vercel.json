@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "projects": [
+    {
+      "name": "fermion-web",
+      "src": "apps/web"
+    }
+  ],
+  "buildCommand": "pnpm --filter @fermion/web build",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "pnpm install",
+  "framework": null
+}

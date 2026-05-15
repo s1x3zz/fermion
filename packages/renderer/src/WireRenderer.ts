@@ -40,6 +40,7 @@ export interface WireParams {
   normalA?: Vector3
   normalB?: Vector3
   signalType?: SignalType
+  dashed?: boolean
 }
 
 // ── GLSL shaders ─────────────────────────────────────────────────────────────
@@ -56,29 +57,32 @@ const FRAG = /* glsl */`
 uniform float uTime;
 uniform float uCurrent;
 uniform vec3  uColor;
+uniform float uDashed;
+uniform float uSelected;
 varying vec2  vUv;
 
 float particle(float u, float phase, float speed, float width) {
   float pos = mod(phase + uTime * speed, 1.0);
   float d   = abs(u - pos);
-  // wrap-around distance
   d = min(d, 1.0 - d);
   return smoothstep(width, 0.0, d);
 }
 
 void main() {
-  // Base wire with subtle ambient shading along the tube cross-section
-  float rim   = abs(vUv.y - 0.5) * 2.0;           // 0 at centre, 1 at edges
+  if (uDashed > 0.5) {
+    float dash = mod(vUv.x * 12.0 - uTime * 1.5, 1.0);
+    if (dash > 0.55) discard;
+  }
+
+  float rim   = abs(vUv.y - 0.5) * 2.0;
   float shade = mix(1.0, 0.55, rim * rim);
   vec3  base  = uColor * shade;
 
-  // Flowing particles along UV.x when current is active
   float flow = 0.0;
   if (uCurrent > 0.01) {
     flow += particle(vUv.x, 0.00, 0.35, 0.018) * uCurrent;
     flow += particle(vUv.x, 0.33, 0.35, 0.018) * uCurrent;
     flow += particle(vUv.x, 0.66, 0.35, 0.018) * uCurrent;
-    // faster dim trail
     flow += particle(vUv.x, 0.16, 0.55, 0.010) * uCurrent * 0.5;
     flow += particle(vUv.x, 0.50, 0.55, 0.010) * uCurrent * 0.5;
     flow += particle(vUv.x, 0.82, 0.55, 0.010) * uCurrent * 0.5;
@@ -86,16 +90,42 @@ void main() {
 
   vec3  bright = mix(uColor, vec3(1.0), 0.75);
   vec3  color  = mix(base, bright, clamp(flow, 0.0, 1.0));
-  float alpha  = 1.0;
 
-  gl_FragColor = vec4(color, alpha);
+  if (uSelected > 0.5) {
+    color = mix(color, vec3(0.3, 0.6, 1.0), 0.45);
+  }
+
+  gl_FragColor = vec4(color, 1.0);
 }
 `
 
-// ── Internal wire entry ────────────────────────────────────────────────────
+// ── Curve builder ─────────────────────────────────────────────────────────────
+
+function buildTube(
+  pinA: Vector3,
+  pinB: Vector3,
+  normalA: Vector3,
+  normalB: Vector3,
+): TubeGeometry {
+  const dist = pinA.distanceTo(pinB)
+  const lift = Math.min(Math.max(dist * 0.5, 0.4), 1.2)
+  const ctrl0 = pinA.clone()
+  const ctrl1 = pinA.clone().addScaledVector(normalA.clone().normalize(), lift)
+  const ctrl2 = pinB.clone().addScaledVector(normalB.clone().normalize(), lift)
+  const ctrl3 = pinB.clone()
+  const curve = new CatmullRomCurve3([ctrl0, ctrl1, ctrl2, ctrl3], false, 'catmullrom', 0.5)
+  return new TubeGeometry(curve, 48, 0.035, 8, false)
+}
+
+// ── Internal wire entry ───────────────────────────────────────────────────────
 
 interface WireEntry {
   mesh: Mesh<TubeGeometry, ShaderMaterial>
+  pinA: Vector3
+  pinB: Vector3
+  normalA: Vector3
+  normalB: Vector3
+  signalType: SignalType
 }
 
 // ── WireRenderer ─────────────────────────────────────────────────────────────
@@ -117,34 +147,38 @@ export class WireRenderer {
       normalA = new Vector3(0, 1, 0),
       normalB = new Vector3(0, 1, 0),
       signalType = SignalType.GENERIC,
+      dashed = false,
     } = params
 
-    // 4-point Catmull-Rom — exit/approach tangents via pin normals
-    const ctrl0 = pinA.clone()
-    const ctrl1 = pinA.clone().addScaledVector(normalA.clone().normalize(), 0.8)
-    const ctrl2 = pinB.clone().addScaledVector(normalB.clone().normalize(), 0.8)
-    const ctrl3 = pinB.clone()
-
-    const curve = new CatmullRomCurve3([ctrl0, ctrl1, ctrl2, ctrl3], false, 'catmullrom', 0.5)
-    const geo   = new TubeGeometry(curve, 64, 0.035, 8, false)
-
-    const hex   = SIGNAL_COLORS[signalType]
-    const color = new Color(hex)
+    const geo  = buildTube(pinA, pinB, normalA, normalB)
+    const color = new Color(SIGNAL_COLORS[signalType])
 
     const mat = new ShaderMaterial({
       vertexShader:   VERT,
       fragmentShader: FRAG,
       uniforms: {
-        uTime:    { value: 0 },
-        uCurrent: { value: 0 },
-        uColor:   { value: color },
+        uTime:     { value: 0 },
+        uCurrent:  { value: 0 },
+        uColor:    { value: color },
+        uDashed:   { value: dashed ? 1.0 : 0.0 },
+        uSelected: { value: 0.0 },
       },
+      transparent: dashed,
     })
 
     const mesh = new Mesh(geo, mat)
     mesh.name = `wire:${id}`
+    mesh.userData['wireId'] = id
     this.scene.add(mesh)
-    this.wires.set(id, { mesh })
+
+    this.wires.set(id, {
+      mesh,
+      pinA: pinA.clone(),
+      pinB: pinB.clone(),
+      normalA: normalA.clone().normalize(),
+      normalB: normalB.clone().normalize(),
+      signalType,
+    })
   }
 
   removeWire(id: string): void {
@@ -156,13 +190,45 @@ export class WireRenderer {
     this.wires.delete(id)
   }
 
+  updatePins(id: string, pinA: Vector3, pinB: Vector3): void {
+    const entry = this.wires.get(id)
+    if (!entry) return
+    entry.mesh.geometry.dispose()
+    entry.mesh.geometry = buildTube(pinA, pinB, entry.normalA, entry.normalB)
+    entry.pinA = pinA.clone()
+    entry.pinB = pinB.clone()
+  }
+
   updateCurrent(id: string, current: number): void {
     const entry = this.wires.get(id)
     if (!entry) return
     entry.mesh.material.uniforms['uCurrent']!.value = Math.max(0, Math.min(1, current))
   }
 
-  // Call each frame with total elapsed time in seconds
+  setSelected(id: string, selected: boolean): void {
+    const entry = this.wires.get(id)
+    if (!entry) return
+    entry.mesh.material.uniforms['uSelected']!.value = selected ? 1.0 : 0.0
+  }
+
+  setDashed(id: string, dashed: boolean): void {
+    const entry = this.wires.get(id)
+    if (!entry) return
+    entry.mesh.material.uniforms['uDashed']!.value = dashed ? 1.0 : 0.0
+    entry.mesh.material.transparent = dashed
+  }
+
+  updateSignalType(id: string, signalType: SignalType): void {
+    const entry = this.wires.get(id)
+    if (!entry) return
+    entry.mesh.material.uniforms['uColor']!.value = new Color(SIGNAL_COLORS[signalType])
+    entry.signalType = signalType
+  }
+
+  getMeshes(): Mesh[] {
+    return [...this.wires.values()].map((e) => e.mesh)
+  }
+
   update(time: number): void {
     for (const { mesh } of this.wires.values()) {
       mesh.material.uniforms['uTime']!.value = time

@@ -15,7 +15,8 @@ export interface CircuitEdge {
   value: number
 }
 
-export interface CircuitGraph {
+/** In-memory live graph (uses Maps; not JSON-serialisable). */
+export interface CircuitGraphLive {
   nodes: Map<NodeId, CircuitNode>
   edges: Map<EdgeId, CircuitEdge>
 }

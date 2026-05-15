@@ -1,5 +1,5 @@
 import { createSignal, onMount, onCleanup, For, Show } from 'solid-js'
-import { A, useSearchParams } from '@solidjs/router'
+import { A, useSearchParams, useNavigate } from '@solidjs/router'
 import { useAuthStore } from '../stores/authStore'
 import { AuthModal } from '../components/AuthModal'
 import './landing.css'
@@ -115,6 +115,7 @@ function Navbar(props: NavbarProps) {
               </>
             }
           >
+            <A href="/dashboard" class="btn btn-outline btn-sm">Dashboard</A>
             <span class="nav-user-email">
               {truncate(auth.user()?.email ?? 'User')}
             </span>
@@ -132,6 +133,17 @@ function Navbar(props: NavbarProps) {
 }
 
 function Hero(props: { onOpenModal: () => void }) {
+  const auth = useAuthStore()
+  const navigate = useNavigate()
+
+  function handlePrimaryClick() {
+    if (auth.user()) {
+      navigate('/dashboard')
+    } else {
+      navigate('/sim?guest=true')
+    }
+  }
+
   return (
     <section class="hero">
       <div class="l-inner">
@@ -148,8 +160,12 @@ function Hero(props: { onOpenModal: () => void }) {
           no setup — just drag, connect, and simulate.
         </p>
         <div class="hero-actions">
-          <A href="/sim" class="btn btn-primary">Open simulator</A>
-          <button class="btn btn-outline" onClick={props.onOpenModal}>Sign up free</button>
+          <button class="btn btn-primary" onClick={handlePrimaryClick}>
+            {auth.user() ? 'Go to Dashboard' : 'Open simulator'}
+          </button>
+          <Show when={!auth.user()}>
+            <button class="btn btn-outline" onClick={props.onOpenModal}>Sign up free</button>
+          </Show>
         </div>
       </div>
     </section>
@@ -304,7 +320,7 @@ export function Landing() {
       <Show when={showModal()}>
         <AuthModal
           onClose={closeModal}
-          initialError={searchParams.error}
+          {...(searchParams.error !== undefined ? { initialError: searchParams.error } : {})}
         />
       </Show>
     </>

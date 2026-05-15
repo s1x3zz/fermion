@@ -5,7 +5,26 @@
       "PowerShell(pnpm *)",
       "PowerShell(npm install *)",
       "PowerShell(pnpm approve-builds *)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "WebSearch",
+      "WebFetch(domain:pencil.dev)",
+      "WebFetch(domain:docs.pencil.dev)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:histoire.dev)",
+      "WebFetch(domain:github.com)",
+      "PowerShell(New-Item *)",
+      "Bash(pnpm --filter @fermion/web build)",
+      "Bash(pnpm --filter @fermion/web dev)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(pnpm --filter @fermion/web dev --port 5175)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5175/)",
+      "Bash(pnpm --filter @fermion/web add comlink)",
+      "Bash(pnpm --filter @fermion/renderer build)",
+      "Bash(pnpm *)",
+      "PowerShell(Get-Content *)",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(xargs ls -la)",
+      "Bash(git add *)"
     ]
   }
 }

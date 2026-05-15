@@ -3,11 +3,11 @@ import {
   Vector2,
   Vector3,
   Spherical,
-  Raycaster,
   Object3D,
   Scene,
   Box3,
   MathUtils,
+  Raycaster,
 } from 'three'
 
 export interface CameraState {
@@ -50,11 +50,12 @@ export class CameraController {
   private isPanning = false
   private activeButton = -1
   private lastPointer = new Vector2()
+  private cursorNDC = new Vector2()
+  private raycaster = new Raycaster()
 
   private velocityTheta = 0
   private velocityPhi = 0
 
-  private raycaster = new Raycaster()
   private animating = false
   private animationId: number | null = null
 
@@ -98,6 +99,7 @@ export class CameraController {
     el.addEventListener('contextmenu', this._onContextMenu)
     el.addEventListener('mousedown', this._onMouseDown)
     el.addEventListener('wheel', this._onWheel, { passive: false })
+    el.addEventListener('mousemove', this._onCursorTrack)
     window.addEventListener('mousemove', this._onMouseMove)
     window.addEventListener('mouseup', this._onMouseUp)
   }
@@ -107,12 +109,21 @@ export class CameraController {
     el.removeEventListener('contextmenu', this._onContextMenu)
     el.removeEventListener('mousedown', this._onMouseDown)
     el.removeEventListener('wheel', this._onWheel)
+    el.removeEventListener('mousemove', this._onCursorTrack)
     window.removeEventListener('mousemove', this._onMouseMove)
     window.removeEventListener('mouseup', this._onMouseUp)
     if (this.animationId !== null) cancelAnimationFrame(this.animationId)
   }
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
+  private _onCursorTrack = (e: MouseEvent) => {
+    const rect = this.domElement.getBoundingClientRect()
+    this.cursorNDC.set(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1,
+    )
+  }
 
   private _onContextMenu = (e: Event) => e.preventDefault()
 
@@ -165,10 +176,23 @@ export class CameraController {
   private _onWheel = (e: WheelEvent) => {
     e.preventDefault()
 
-    // Update dynamic pivot via raycast under cursor
-    this._updatePivotFromCursor(e.clientX, e.clientY)
+    // Raycast through cursor to find zoom pivot
+    if (this.scene) {
+      this.raycaster.setFromCamera(this.cursorNDC, this.camera)
+      const hits = this.raycaster.intersectObjects(this.scene.children, true)
+      if (hits.length > 0) {
+        this.targetPivot.copy(hits[0]!.point)
+      } else {
+        // No hit — project along ray at current orbit radius
+        this.raycaster.ray.at(this.targetSpherical.radius, this.targetPivot)
+      }
+    }
 
-    const factor = e.deltaY > 0 ? 1 + 0.1 * this.zoomSpeed : 1 - 0.1 * this.zoomSpeed
+    // Scale zoom speed with distance so close-up scrolling stays fine-grained
+    const distScale = MathUtils.clamp(this.targetSpherical.radius / 10, 0.1, 2.0)
+    const factor = e.deltaY > 0
+      ? 1 + 0.1 * this.zoomSpeed * distScale
+      : 1 - 0.1 * this.zoomSpeed * distScale
     this.targetSpherical.radius = MathUtils.clamp(
       this.targetSpherical.radius * factor,
       this.minRadius,
@@ -194,25 +218,6 @@ export class CameraController {
 
     this.targetPivot.addScaledVector(right, -dx * scale)
     this.targetPivot.addScaledVector(up, dy * scale)
-  }
-
-  // ── Raycast pivot ──────────────────────────────────────────────────────────
-
-  private _updatePivotFromCursor(clientX: number, clientY: number) {
-    if (!this.scene) return
-
-    const rect = this.domElement.getBoundingClientRect()
-    const ndc = new Vector2(
-      ((clientX - rect.left) / rect.width) * 2 - 1,
-      -((clientY - rect.top) / rect.height) * 2 + 1,
-    )
-
-    this.raycaster.setFromCamera(ndc, this.camera)
-    const intersects = this.raycaster.intersectObjects(this.scene.children, true)
-
-    if (intersects.length > 0 && intersects[0]) {
-      this.targetPivot.copy(intersects[0].point)
-    }
   }
 
   // ── Update (call each frame) ───────────────────────────────────────────────

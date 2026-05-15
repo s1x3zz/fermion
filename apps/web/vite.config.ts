@@ -3,6 +3,7 @@ import solid from 'vite-plugin-solid'
 import { resolve } from 'path'
 
 export default defineConfig({
+  base: '/',
   plugins: [solid()],
   resolve: {
     alias: {
@@ -14,5 +15,18 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          vendor: ['zustand', 'immer', 'dexie'],
+        },
+      },
+    },
   },
 })

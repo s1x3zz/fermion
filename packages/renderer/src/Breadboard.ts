@@ -183,6 +183,32 @@ export class Breadboard {
     )
   }
 
+  /**
+   * Snaps a world-space XZ position to the nearest main-grid pin.
+   * Returns null when the cursor is more than 2 pitches from any valid pin.
+   */
+  snapToNearestPin(worldX: number, worldZ: number): { row: string; col: number } | null {
+    const localX = worldX - this.group.position.x
+    const localZ = worldZ - this.group.position.z
+
+    // Nearest column (inverse of _mainColX)
+    const colF = localX / PITCH + (MAIN_COLS - 1) / 2 + 1
+    const col = Math.round(colF)
+    if (col < 1 || col > MAIN_COLS) return null
+
+    // Nearest row
+    const rows = Object.entries(Z_ROW_MAP) as [string, number][]
+    let bestRow = rows[0]![0]
+    let bestDist = Math.abs(localZ - rows[0]![1])
+    for (const [r, z] of rows) {
+      const d = Math.abs(localZ - z)
+      if (d < bestDist) { bestDist = d; bestRow = r }
+    }
+    if (bestDist > PITCH * 2) return null
+
+    return { row: bestRow, col }
+  }
+
   /** Returns world-space position of a power-rail pin. col = 1–25. */
   getPowerRailPosition(
     rail: 'vcc_top' | 'gnd_top' | 'vcc_bot' | 'gnd_bot',

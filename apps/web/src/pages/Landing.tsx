@@ -126,61 +126,179 @@ function useRevealObserver() {
   })
 }
 
-// ── Particle canvas ───────────────────────────────────────────────────────────
+// ── PCB trace network canvas (hero background) ────────────────────────────────
 
 function ParticleCanvas() {
   let canvas!: HTMLCanvasElement
   let animId = 0
-  let removeResize = () => {}
+  let mx = -9999, my = -9999
+  let rmCleanup = () => {}
 
   onMount(() => {
     const ctx = canvas.getContext('2d')!
-    const pts: { x: number; y: number; vx: number; vy: number; r: number; a: number }[] = []
+    const nodes: { x: number; y: number; vx: number; vy: number }[] = []
+    const pulses: { a: number; b: number; t: number; spd: number }[] = []
+    let lastPulse = 0
 
     const resize = () => {
       canvas.width = canvas.offsetWidth
       canvas.height = canvas.offsetHeight
     }
     resize()
-    window.addEventListener('resize', resize, { passive: true })
-    removeResize = () => window.removeEventListener('resize', resize)
 
-    for (let i = 0; i < 80; i++) {
-      pts.push({
+    for (let i = 0; i < 40; i++)
+      nodes.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.28,
-        vy: (Math.random() - 0.5) * 0.28,
-        r: Math.random() * 1.1 + 0.3,
-        a: Math.random() * 0.38 + 0.06,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15,
       })
+
+    const onResize = () => resize()
+    const onMouse = (e: MouseEvent) => { mx = e.clientX; my = e.clientY }
+    window.addEventListener('resize', onResize, { passive: true })
+    window.addEventListener('mousemove', onMouse, { passive: true })
+    rmCleanup = () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('mousemove', onMouse)
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of pts) {
-        p.x = (p.x + p.vx + canvas.width) % canvas.width
-        p.y = (p.y + p.vy + canvas.height) % canvas.height
+    function draw(time: number) {
+      const W = canvas.width, H = canvas.height
+      ctx.clearRect(0, 0, W, H)
+
+      for (const n of nodes) {
+        n.x = (n.x + n.vx + W) % W
+        n.y = (n.y + n.vy + H) % H
+      }
+
+      // Build connection list — 40 nodes → max 780 pairs, fast
+      const conns: { i: number; j: number; d: number }[] = []
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const ni = nodes[i]!, nj = nodes[j]!
+          const dx = ni.x - nj.x, dy = ni.y - nj.y
+          const d = Math.sqrt(dx * dx + dy * dy)
+          if (d < 150) conns.push({ i, j, d })
+        }
+      }
+
+      // Dim trace lines
+      for (const c of conns) {
+        const ni = nodes[c.i]!, nj = nodes[c.j]!
         ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(59,139,255,${p.a})`
+        ctx.moveTo(ni.x, ni.y)
+        ctx.lineTo(nj.x, nj.y)
+        ctx.strokeStyle = `rgba(28,28,54,${((1 - c.d / 150) * 0.88).toFixed(3)})`
+        ctx.lineWidth = 0.8
+        ctx.stroke()
+      }
+
+      // Spawn a new pulse every 3s along a random connection
+      if (time - lastPulse > 3000 && conns.length > 0) {
+        lastPulse = time
+        const c = conns[Math.floor(Math.random() * conns.length)]!
+        pulses.push({ a: c.i, b: c.j, t: 0, spd: 0.007 + Math.random() * 0.005 })
+      }
+
+      // Animate pulses — bright trace line + traveling dot
+      for (let p = pulses.length - 1; p >= 0; p--) {
+        const pulse = pulses[p]!
+        pulse.t += pulse.spd
+        if (pulse.t >= 1) { pulses.splice(p, 1); continue }
+        const na = nodes[pulse.a]!, nb = nodes[pulse.b]!
+        const dx = na.x - nb.x, dy = na.y - nb.y
+        const d = Math.sqrt(dx * dx + dy * dy)
+        if (d >= 150) { pulses.splice(p, 1); continue }
+        const fade = 1 - d / 150
+
+        ctx.beginPath()
+        ctx.moveTo(na.x, na.y)
+        ctx.lineTo(nb.x, nb.y)
+        ctx.strokeStyle = `rgba(59,139,255,${(fade * 0.55).toFixed(3)})`
+        ctx.lineWidth = 1.4
+        ctx.stroke()
+
+        const px = na.x + (nb.x - na.x) * pulse.t
+        const py = na.y + (nb.y - na.y) * pulse.t
+        ctx.beginPath()
+        ctx.arc(px, py, 3.2, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(59,139,255,0.92)'
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(px, py, 8, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(59,139,255,0.16)'
         ctx.fill()
       }
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const a = pts[i]!
-          const b = pts[j]!
-          const dx = a.x - b.x
-          const dy = a.y - b.y
-          const d = Math.sqrt(dx * dx + dy * dy)
-          if (d < 110) {
-            ctx.beginPath()
-            ctx.moveTo(a.x, a.y)
-            ctx.lineTo(b.x, b.y)
-            ctx.strokeStyle = `rgba(59,139,255,${0.055 * (1 - d / 110)})`
-            ctx.lineWidth = 0.5
-            ctx.stroke()
-          }
+
+      // Nodes — glow on mouse proximity (<100px)
+      for (const n of nodes) {
+        const dx = n.x - mx, dy = n.y - my
+        const proximity = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy) / 100)
+        const r = 1.8 + proximity * 2.8
+        ctx.beginPath()
+        ctx.arc(n.x, n.y, r, 0, Math.PI * 2)
+        ctx.fillStyle = proximity > 0.05
+          ? `rgba(59,139,255,${(0.25 + proximity * 0.65).toFixed(3)})`
+          : 'rgba(30,30,62,0.45)'
+        ctx.fill()
+        if (proximity > 0.28) {
+          ctx.beginPath()
+          ctx.arc(n.x, n.y, r + 6, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(59,139,255,${(proximity * 0.18).toFixed(3)})`
+          ctx.fill()
+        }
+      }
+
+      animId = requestAnimationFrame(draw)
+    }
+    animId = requestAnimationFrame(draw)
+  })
+
+  onCleanup(() => {
+    cancelAnimationFrame(animId)
+    rmCleanup()
+  })
+
+  return <canvas ref={canvas} class="hero-canvas" />
+}
+
+// ── Dot-wave canvas (features section background) ─────────────────────────────
+
+function DotWaveCanvas() {
+  let canvas!: HTMLCanvasElement
+  let animId = 0
+  let rmResize = () => {}
+
+  onMount(() => {
+    const ctx = canvas.getContext('2d')!
+    const SPACING = 30
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+    }
+    resize()
+    const onResize = () => resize()
+    window.addEventListener('resize', onResize, { passive: true })
+    rmResize = () => window.removeEventListener('resize', onResize)
+
+    function draw(time: number) {
+      const W = canvas.width, H = canvas.height
+      ctx.clearRect(0, 0, W, H)
+      const cx = W / 2, cy = H / 2
+      const cols = Math.ceil(W / SPACING) + 2
+      const rows = Math.ceil(H / SPACING) + 2
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x = c * SPACING, y = r * SPACING
+          const ddx = x - cx, ddy = y - cy
+          const dist = Math.sqrt(ddx * ddx + ddy * ddy)
+          const wave = Math.sin(dist * 0.042 - time * 0.0009) * 0.5 + 0.5
+          ctx.beginPath()
+          ctx.arc(x, y, 1.3, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(59,139,255,${(0.12 + wave * 0.28).toFixed(3)})`
+          ctx.fill()
         }
       }
       animId = requestAnimationFrame(draw)
@@ -190,10 +308,61 @@ function ParticleCanvas() {
 
   onCleanup(() => {
     cancelAnimationFrame(animId)
-    removeResize()
+    rmResize()
   })
 
-  return <canvas ref={canvas} class="hero-canvas" />
+  return <canvas ref={canvas} class="features-bg-canvas" />
+}
+
+// ── Sine-wave canvas (pricing section background) ─────────────────────────────
+
+function PricingWaveCanvas() {
+  let canvas!: HTMLCanvasElement
+  let animId = 0
+  let rmResize = () => {}
+
+  const WAVES = [
+    { freq: 0.0055, amp: 32, spd: 0.00025, yR: 0.3 },
+    { freq: 0.0085, amp: 22, spd: 0.00042, yR: 0.55 },
+    { freq: 0.004, amp: 44, spd: 0.00018, yR: 0.78 },
+  ] as const
+
+  onMount(() => {
+    const ctx = canvas.getContext('2d')!
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+    }
+    resize()
+    const onResize = () => resize()
+    window.addEventListener('resize', onResize, { passive: true })
+    rmResize = () => window.removeEventListener('resize', onResize)
+
+    function draw(time: number) {
+      const W = canvas.width, H = canvas.height
+      ctx.clearRect(0, 0, W, H)
+      for (const w of WAVES) {
+        const baseY = H * w.yR
+        ctx.beginPath()
+        ctx.moveTo(0, baseY + Math.sin(time * w.spd) * w.amp)
+        for (let x = 2; x <= W; x += 3)
+          ctx.lineTo(x, baseY + Math.sin(x * w.freq + time * w.spd) * w.amp)
+        ctx.strokeStyle = 'rgba(59,139,255,0.05)'
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+      }
+      animId = requestAnimationFrame(draw)
+    }
+    animId = requestAnimationFrame(draw)
+  })
+
+  onCleanup(() => {
+    cancelAnimationFrame(animId)
+    rmResize()
+  })
+
+  return <canvas ref={canvas} class="pricing-wave-canvas" />
 }
 
 // ── Bento card inners ─────────────────────────────────────────────────────────
@@ -450,7 +619,8 @@ function Marquee() {
 
 function BentoGrid() {
   return (
-    <section class="section" id="features">
+    <section class="section section-features" id="features">
+      <DotWaveCanvas />
       <div class="l-inner">
         <div class="section-head reveal">
           <p class="section-label">Features</p>
@@ -459,7 +629,7 @@ function BentoGrid() {
         </div>
         <div class="bento-grid">
           {/* A — large (2 cols, 2 rows): live 3D sim */}
-          <div class="bento-card bento-a reveal" style="--dl:0.04s">
+          <div class="bento-card bento-a reveal" style="--dl:0s">
             <p class="bento-tag">CORE ENGINE</p>
             <h3 class="bento-title">Real-time 3D simulation</h3>
             <p class="bento-desc">
@@ -471,7 +641,7 @@ function BentoGrid() {
             <div class="bento-glow" />
           </div>
           {/* B — Arduino */}
-          <div class="bento-card bento-b reveal" style="--dl:0.11s">
+          <div class="bento-card bento-b reveal" style="--dl:0.1s">
             <p class="bento-tag">MICROCONTROLLER</p>
             <h3 class="bento-title">Arduino emulation</h3>
             <p class="bento-desc">Cycle-accurate ATmega328P via avr8js.</p>
@@ -479,7 +649,7 @@ function BentoGrid() {
             <div class="bento-glow" />
           </div>
           {/* C — MNA solver */}
-          <div class="bento-card bento-c reveal" style="--dl:0.17s">
+          <div class="bento-card bento-c reveal" style="--dl:0.2s">
             <p class="bento-tag">SOLVER</p>
             <h3 class="bento-title">MNA solver</h3>
             <p class="bento-desc">Live node voltages and branch currents.</p>
@@ -487,7 +657,7 @@ function BentoGrid() {
             <div class="bento-glow" />
           </div>
           {/* D — Export */}
-          <div class="bento-card bento-d reveal" style="--dl:0.23s">
+          <div class="bento-card bento-d reveal" style="--dl:0.3s">
             <span class="bento-badge bento-pro">PRO</span>
             <p class="bento-tag">EXPORT</p>
             <h3 class="bento-title">Export to KiCad</h3>
@@ -495,7 +665,7 @@ function BentoGrid() {
             <div class="bento-glow" />
           </div>
           {/* E — Offline */}
-          <div class="bento-card bento-e reveal" style="--dl:0.29s">
+          <div class="bento-card bento-e reveal" style="--dl:0.4s">
             <span class="bento-badge bento-pwa">PWA</span>
             <p class="bento-tag">OFFLINE</p>
             <h3 class="bento-title">Works offline</h3>
@@ -733,7 +903,8 @@ function Demo() {
 
 function Pricing(props: { onOpenModal: () => void }) {
   return (
-    <section class="section" id="pricing">
+    <section class="section section-pricing" id="pricing">
+      <PricingWaveCanvas />
       <div class="l-inner">
         <div class="section-head reveal">
           <p class="section-label">Pricing</p>
@@ -745,7 +916,7 @@ function Pricing(props: { onOpenModal: () => void }) {
             {(plan, i) => (
               <div
                 class={`pricing-card reveal${plan.featured ? ' pricing-featured' : ''}`}
-                style={`--dl:${i() * 0.08}s`}
+                style={`--dl:${i() * 0.15}s`}
               >
                 <Show when={plan.featured}>
                   <div class="pricing-glow" />
@@ -791,7 +962,7 @@ function Testimonials() {
         <div class="testi-grid">
           <For each={TESTIMONIALS}>
             {(t, i) => (
-              <div class="testi-card reveal" style={`--dl:${i() * 0.09}s`}>
+              <div class="testi-card reveal" style={`--dl:${i() * 0.2}s`}>
                 <p class="testi-q">"{t.quote}"</p>
                 <div class="testi-author">
                   <div class="testi-av">{t.initials}</div>

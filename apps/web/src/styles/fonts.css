@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Playfair+Display:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&family=Syne:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-display: 'DM Serif Display', serif;
+  --font-promo:   'Playfair Display', serif;
+  --font-serif:   'Instrument Serif', serif;
+  --font-accent:  'Syne', sans-serif;
+  --font-ui:      'Space Grotesk', system-ui, sans-serif;
+}

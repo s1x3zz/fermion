@@ -24,7 +24,13 @@
       "PowerShell(Get-Content *)",
       "Bash(curl -s http://localhost:3001/api/health)",
       "Bash(xargs ls -la)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(gh repo *)",
+      "Bash(where gh *)",
+      "Bash(gh --version)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }

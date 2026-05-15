@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "vercel-build": "pnpm --filter @fermion/web build"
   },
   "dependencies": {
     "@fermion/core": "workspace:*",

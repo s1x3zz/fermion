@@ -1,7 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @fermion/web build",
-  "outputDirectory": "apps/web/dist",
-  "installCommand": "pnpm install",
-  "framework": null
+  "builds": [
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }

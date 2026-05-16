@@ -26,18 +26,22 @@ export interface CameraControllerOptions {
   panSpeed?: number
 }
 
-const _v3a = new Vector3()
-const _v3b = new Vector3()
+// Reusable scratch vectors — never nested calls between _va/_vb
+const _va = new Vector3()
+const _vb = new Vector3()
 
 export class CameraController {
   private camera: PerspectiveCamera
   private domElement: HTMLElement
   private scene: Scene | null = null
 
-  private spherical: Spherical
-  private targetSpherical: Spherical
-  private pivot: Vector3
-  private targetPivot: Vector3
+  // Invariant every frame: camera.position === pivot + sphericalOffset
+  // pivot is the orbit/look-at center in world space.
+  private pivot = new Vector3()
+  private targetPivot = new Vector3()
+
+  private spherical: Spherical        // current (rendered)
+  private targetSpherical: Spherical  // desired (lerped toward)
 
   private dampingFactor: number
   private minRadius: number
@@ -53,11 +57,8 @@ export class CameraController {
   private cursorNDC = new Vector2()
   private raycaster = new Raycaster()
 
-  private velocityTheta = 0
-  private velocityPhi = 0
-
-  private animating = false
   private animationId: number | null = null
+  private lastClickTime = 0
 
   constructor(
     camera: PerspectiveCamera,
@@ -67,21 +68,17 @@ export class CameraController {
     this.camera = camera
     this.domElement = domElement
 
-    this.dampingFactor = options.dampingFactor ?? 0.08
+    this.dampingFactor = options.dampingFactor ?? 0.12
     this.minRadius = options.minRadius ?? 0.5
-    this.maxRadius = options.maxRadius ?? 500
+    this.maxRadius = options.maxRadius ?? 200
     this.zoomSpeed = options.zoomSpeed ?? 1.0
     this.orbitSpeed = options.orbitSpeed ?? 0.6
     this.panSpeed = options.panSpeed ?? 1.0
 
-    // Derive initial spherical from camera position
-    _v3a.copy(camera.position)
-    this.spherical = new Spherical().setFromVector3(_v3a)
+    // Derive initial spherical from camera.position (pivot = origin)
+    _va.copy(camera.position)
+    this.spherical = new Spherical().setFromVector3(_va)
     this.targetSpherical = this.spherical.clone()
-
-    this.pivot = new Vector3()
-    this.targetPivot = new Vector3()
-
     this._clampSpherical(this.spherical)
     this._clampSpherical(this.targetSpherical)
 
@@ -102,6 +99,7 @@ export class CameraController {
     el.addEventListener('mousemove', this._onCursorTrack)
     window.addEventListener('mousemove', this._onMouseMove)
     window.addEventListener('mouseup', this._onMouseUp)
+    window.addEventListener('keydown', this._onKeyDown)
   }
 
   dispose() {
@@ -112,10 +110,11 @@ export class CameraController {
     el.removeEventListener('mousemove', this._onCursorTrack)
     window.removeEventListener('mousemove', this._onMouseMove)
     window.removeEventListener('mouseup', this._onMouseUp)
+    window.removeEventListener('keydown', this._onKeyDown)
     if (this.animationId !== null) cancelAnimationFrame(this.animationId)
   }
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+  // ── Input handlers ─────────────────────────────────────────────────────────
 
   private _onCursorTrack = (e: MouseEvent) => {
     const rect = this.domElement.getBoundingClientRect()
@@ -129,6 +128,11 @@ export class CameraController {
 
   private _onMouseDown = (e: MouseEvent) => {
     if (e.button === 0) {
+      const now = performance.now()
+      if (now - this.lastClickTime < 300 && this.scene) {
+        this._doubleclickFocus(e)
+      }
+      this.lastClickTime = now
       this.isDragging = true
       this.isPanning = false
     } else if (e.button === 1 || e.button === 2) {
@@ -140,13 +144,10 @@ export class CameraController {
     e.preventDefault()
     this.activeButton = e.button
     this.lastPointer.set(e.clientX, e.clientY)
-    this.velocityTheta = 0
-    this.velocityPhi = 0
   }
 
   private _onMouseMove = (e: MouseEvent) => {
     if (!this.isDragging && !this.isPanning) return
-
     const dx = e.clientX - this.lastPointer.x
     const dy = e.clientY - this.lastPointer.y
     this.lastPointer.set(e.clientX, e.clientY)
@@ -154,12 +155,9 @@ export class CameraController {
     if (this.isPanning) {
       this._pan(dx, dy)
     } else {
+      // Orbit — pivot is NEVER modified here, only angles change
       const dTheta = -(dx / this.domElement.clientWidth) * Math.PI * 2 * this.orbitSpeed
       const dPhi = -(dy / this.domElement.clientHeight) * Math.PI * this.orbitSpeed
-
-      this.velocityTheta = dTheta
-      this.velocityPhi = dPhi
-
       this.targetSpherical.theta += dTheta
       this.targetSpherical.phi += dPhi
       this._clampSpherical(this.targetSpherical)
@@ -173,115 +171,136 @@ export class CameraController {
     this.activeButton = -1
   }
 
+  private _onKeyDown = (e: KeyboardEvent) => {
+    const t = e.target as HTMLElement
+    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) return
+    if (e.key === 'r' || e.key === 'R' || e.key === 'Home') {
+      this.resetView()
+    } else if (e.key === 'f' || e.key === 'F') {
+      this._focusScene()
+    }
+  }
+
   private _onWheel = (e: WheelEvent) => {
     e.preventDefault()
+    this._zoomTowardCursor(e.deltaY)
+  }
 
-    // Raycast through cursor to find zoom pivot
-    if (this.scene) {
-      this.raycaster.setFromCamera(this.cursorNDC, this.camera)
-      const hits = this.raycaster.intersectObjects(this.scene.children, true)
-      if (hits.length > 0) {
-        this.targetPivot.copy(hits[0]!.point)
-      } else {
-        // No hit — project along ray at current orbit radius
-        this.raycaster.ray.at(this.targetSpherical.radius, this.targetPivot)
+  // ── Zoom ──────────────────────────────────────────────────────────────────
+  //
+  // KEY INSIGHT: when pivot changes, spherical must be immediately rebased so
+  // that camera.position = newPivot + newOffset = same position (no jump).
+  // Then we adjust radius for the actual zoom movement.
+
+  private _zoomTowardCursor(deltaY: number) {
+    const hitPoint = this._getZoomTarget()
+    const camPos = this.camera.position.clone()
+
+    // Vector from hitPoint to camera
+    const toCamera = camPos.sub(hitPoint)  // camPos is already a clone
+    const currentDist = toCamera.length()
+    if (currentDist < 1e-6) return
+
+    // Proportional speed: farther = faster scroll feel
+    const distScale = MathUtils.clamp(currentDist / 10, 0.05, 3.0)
+    const step = 0.12 * this.zoomSpeed * distScale
+    const factor = deltaY > 0 ? 1 + step : 1 - step
+    const newDist = MathUtils.clamp(currentDist * factor, this.minRadius, this.maxRadius)
+
+    // New camera stays on same ray from hitPoint, just different distance
+    const dir = toCamera.divideScalar(currentDist) // normalize (toCamera is a clone)
+    const newCamPos = hitPoint.clone().addScaledVector(dir, newDist)
+
+    // Rebase spherical: express (newCamPos - hitPoint) as spherical
+    const newOffset = newCamPos.clone().sub(hitPoint)
+    const newSph = new Spherical().setFromVector3(newOffset)
+    this._clampSpherical(newSph)
+    newSph.makeSafe()
+
+    // Commit immediately — any lerp between old/new pivot causes position jumps
+    this.pivot.copy(hitPoint)
+    this.targetPivot.copy(hitPoint)
+    this.spherical.copy(newSph)
+    this.targetSpherical.copy(newSph)
+  }
+
+  private _getZoomTarget(): Vector3 {
+    if (!this.scene) return this.pivot.clone()
+
+    this.raycaster.setFromCamera(this.cursorNDC, this.camera)
+    const hits = this.raycaster.intersectObjects(this.scene.children, true)
+    if (hits.length > 0) return hits[0]!.point.clone()
+
+    // Miss → try ground plane (Y = 0)
+    const ray = this.raycaster.ray
+    if (Math.abs(ray.direction.y) > 1e-6) {
+      const t = -ray.origin.y / ray.direction.y
+      if (t > 0 && t < this.maxRadius * 2) {
+        return ray.origin.clone().addScaledVector(ray.direction, t)
       }
     }
 
-    // Scale zoom speed with distance so close-up scrolling stays fine-grained
-    const distScale = MathUtils.clamp(this.targetSpherical.radius / 10, 0.1, 2.0)
-    const factor = e.deltaY > 0
-      ? 1 + 0.1 * this.zoomSpeed * distScale
-      : 1 - 0.1 * this.zoomSpeed * distScale
-    this.targetSpherical.radius = MathUtils.clamp(
-      this.targetSpherical.radius * factor,
-      this.minRadius,
-      this.maxRadius,
-    )
+    // Fallback: stay at current pivot (zoom in/out along orbit axis)
+    return this.pivot.clone()
   }
 
   // ── Pan ────────────────────────────────────────────────────────────────────
 
   private _pan(dx: number, dy: number) {
-    const el = this.domElement
     const distance = this.spherical.radius
+    const scale = (distance * this.panSpeed) / this.domElement.clientHeight
 
-    // Right vector
-    const right = new Vector3()
-    right.setFromMatrixColumn(this.camera.matrix, 0)
+    _va.setFromMatrixColumn(this.camera.matrix, 0) // camera right
+    _vb.setFromMatrixColumn(this.camera.matrix, 1) // camera up
 
-    // Up vector (camera local up)
-    const up = new Vector3()
-    up.setFromMatrixColumn(this.camera.matrix, 1)
+    const delta = new Vector3()
+      .addScaledVector(_va, -dx * scale)
+      .addScaledVector(_vb, dy * scale)
 
-    const scale = (distance * this.panSpeed) / el.clientHeight
-
-    this.targetPivot.addScaledVector(right, -dx * scale)
-    this.targetPivot.addScaledVector(up, dy * scale)
+    // Apply immediately — no lerp lag during mouse drag
+    this.pivot.add(delta)
+    this.targetPivot.copy(this.pivot)
   }
 
-  // ── Update (call each frame) ───────────────────────────────────────────────
+  // ── Update (called each frame from render loop) ───────────────────────────
 
   update(dt: number = 1 / 60) {
     void dt
 
-    if (!this.isDragging) {
-      this.velocityTheta *= 1 - this.dampingFactor * 10
-      this.velocityPhi *= 1 - this.dampingFactor * 10
-    }
+    const t = MathUtils.clamp(this.dampingFactor * 8, 0, 1)
 
-    // Lerp spherical toward target
-    this.spherical.theta = _lerp(this.spherical.theta, this.targetSpherical.theta, this.dampingFactor * 8)
-    this.spherical.phi = _lerp(this.spherical.phi, this.targetSpherical.phi, this.dampingFactor * 8)
-    this.spherical.radius = _lerp(this.spherical.radius, this.targetSpherical.radius, this.dampingFactor * 8)
+    // Smooth orbit: lerp spherical toward target
+    this.spherical.theta = _lerp(this.spherical.theta, this.targetSpherical.theta, t)
+    this.spherical.phi = _lerp(this.spherical.phi, this.targetSpherical.phi, t)
+    this.spherical.radius = _lerp(this.spherical.radius, this.targetSpherical.radius, t)
 
-    // Lerp pivot
-    this.pivot.lerp(this.targetPivot, this.dampingFactor * 8)
+    // Smooth pivot: only active during focus/reset animations
+    // (zoom and pan commit pivot immediately, so lerp is a no-op there)
+    this.pivot.lerp(this.targetPivot, t)
 
     this._clampSpherical(this.spherical)
     this.spherical.makeSafe()
 
-    // Compute camera position from spherical + pivot
-    _v3a.setFromSpherical(this.spherical)
-    this.camera.position.copy(this.pivot).add(_v3a)
+    _va.setFromSpherical(this.spherical)
+    this.camera.position.copy(this.pivot).add(_va)
     this.camera.lookAt(this.pivot)
     this.camera.updateMatrixWorld()
   }
 
   // ── Focus animation ────────────────────────────────────────────────────────
 
-  focusOn(object: Object3D, durationMs = 600) {
+  focusOn(object: Object3D, durationMs = 400) {
     const box = new Box3().setFromObject(object)
-    const center = box.getCenter(_v3b)
-    const size = box.getSize(_v3a).length()
-    const desiredRadius = size * 1.8
+    const center = box.getCenter(new Vector3())
+    const size = box.getSize(new Vector3()).length()
+    const radius = MathUtils.clamp(size * 1.8, this.minRadius, this.maxRadius)
+    this._animateTo(center, this.targetSpherical.theta, Math.PI / 5, radius, durationMs)
+  }
 
-    const startTheta = this.targetSpherical.theta
-    const startPhi = this.targetSpherical.phi
-    const startRadius = this.targetSpherical.radius
-    const startPivot = this.targetPivot.clone()
-
-    const startTime = performance.now()
-
-    const animate = () => {
-      const t = Math.min((performance.now() - startTime) / durationMs, 1)
-      const ease = _easeInOut(t)
-
-      this.targetSpherical.theta = _lerp(startTheta, this.targetSpherical.theta, ease)
-      this.targetSpherical.phi = _lerp(startPhi, Math.PI / 6, ease)
-      this.targetSpherical.radius = _lerp(startRadius, desiredRadius, ease)
-      this.targetPivot.lerpVectors(startPivot, center, ease)
-
-      if (t < 1) {
-        this.animationId = requestAnimationFrame(animate)
-      } else {
-        this.animating = false
-        this.animationId = null
-      }
-    }
-
-    this.animating = true
-    this.animationId = requestAnimationFrame(animate)
+  resetView(durationMs = 400) {
+    const defaultPos = new Vector3(8, 8, 8)
+    const sph = new Spherical().setFromVector3(defaultPos)
+    this._animateTo(new Vector3(), sph.theta, sph.phi, sph.radius, durationMs)
   }
 
   // ── Preset views ───────────────────────────────────────────────────────────
@@ -289,15 +308,9 @@ export class CameraController {
   setView(view: 'front' | 'side' | 'top') {
     const r = this.targetSpherical.radius
     switch (view) {
-      case 'front':
-        this.targetSpherical.set(r, Math.PI / 2, 0)
-        break
-      case 'side':
-        this.targetSpherical.set(r, Math.PI / 2, Math.PI / 2)
-        break
-      case 'top':
-        this.targetSpherical.set(r, 0.01, 0)
-        break
+      case 'front': this.targetSpherical.set(r, Math.PI / 2, 0);           break
+      case 'side':  this.targetSpherical.set(r, Math.PI / 2, Math.PI / 2); break
+      case 'top':   this.targetSpherical.set(r, 0.01, 0);                  break
     }
   }
 
@@ -319,7 +332,73 @@ export class CameraController {
     this.pivot.copy(this.targetPivot)
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  private _animateTo(
+    newPivot: Vector3,
+    theta: number,
+    phi: number,
+    radius: number,
+    durationMs: number,
+  ) {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+
+    // Snapshot current state (not target — use actual rendered state)
+    const s0 = { theta: this.spherical.theta, phi: this.spherical.phi, radius: this.spherical.radius }
+    const p0 = this.pivot.clone()
+    const startTime = performance.now()
+
+    const tick = () => {
+      const elapsed = performance.now() - startTime
+      const raw = Math.min(elapsed / durationMs, 1)
+      const ease = _easeOut(raw)
+
+      this.targetSpherical.theta = _lerp(s0.theta, theta, ease)
+      this.targetSpherical.phi = _lerp(s0.phi, phi, ease)
+      this.targetSpherical.radius = _lerp(s0.radius, radius, ease)
+      this.targetPivot.lerpVectors(p0, newPivot, ease)
+
+      if (raw < 1) {
+        this.animationId = requestAnimationFrame(tick)
+      } else {
+        this.animationId = null
+      }
+    }
+
+    this.animationId = requestAnimationFrame(tick)
+  }
+
+  private _focusScene() {
+    if (!this.scene) return
+    const box = new Box3()
+    this.scene.traverse((child) => {
+      if (child.type === 'Mesh' || child.type === 'InstancedMesh') {
+        box.expandByObject(child)
+      }
+    })
+    if (box.isEmpty()) { this.resetView(); return }
+    const center = box.getCenter(new Vector3())
+    const size = box.getSize(new Vector3()).length()
+    const radius = MathUtils.clamp(size * 1.5, this.minRadius, this.maxRadius)
+    this._animateTo(center, this.targetSpherical.theta, Math.PI / 5, radius, 400)
+  }
+
+  private _doubleclickFocus(e: MouseEvent) {
+    if (!this.scene) return
+    const rect = this.domElement.getBoundingClientRect()
+    const ndc = new Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1,
+    )
+    this.raycaster.setFromCamera(ndc, this.camera)
+    const hits = this.raycaster.intersectObjects(this.scene.children, true)
+    if (hits.length > 0) {
+      this.focusOn(hits[0]!.object)
+    }
+  }
 
   private _clampSpherical(s: Spherical) {
     s.phi = MathUtils.clamp(s.phi, 0.01, Math.PI - 0.01)
@@ -331,7 +410,6 @@ function _lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t
 }
 
-function _easeInOut(t: number): number {
-  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+function _easeOut(t: number): number {
+  return 1 - Math.pow(1 - t, 3) // cubic ease-out
 }
-

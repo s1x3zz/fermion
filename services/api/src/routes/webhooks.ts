@@ -42,7 +42,7 @@ webhooks.post('/stripe', async (c) => {
       const sub = event.data.object as Stripe.Subscription
       const priceId = sub.items.data[0]?.price.id
       const tier =
-        priceId === process.env['STRIPE_PRICE_PRO_MONTHLY'] ? 'pro' : 'team'
+        priceId === process.env['STRIPE_PRICE_PRO_MONTHLY'] ? 'pro' : 'ultimate'
 
       await supabase
         .from('profiles')

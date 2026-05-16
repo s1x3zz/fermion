@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 
 const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? 'http://localhost:3001'
 
-export type Tier = 'guest' | 'free' | 'pro' | 'team'
+export type Tier = 'guest' | 'free' | 'pro' | 'ultimate'
 
 export interface Profile {
   id: string
@@ -80,7 +80,7 @@ export const api = {
     if (!res.ok) throw new Error('Failed to delete project')
   },
 
-  async createCheckout(tier: 'pro' | 'team'): Promise<{ url: string }> {
+  async createCheckout(tier: 'pro' | 'ultimate'): Promise<{ url: string }> {
     const res = await authFetch('/api/billing/create-checkout', {
       method: 'POST',
       body: JSON.stringify({ tier }),

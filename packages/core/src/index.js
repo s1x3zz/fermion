@@ -1,6 +1,7 @@
 export * from './types';
 export * from './types/project';
 export * from './types/components';
+export * from './types/theme';
 export * from './schemas';
 export * from './serialization';
 //# sourceMappingURL=index.js.map

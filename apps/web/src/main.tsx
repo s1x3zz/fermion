@@ -1,3 +1,4 @@
+import './styles/themes.css'
 import './index.css'
 import './styles/fonts.css'
 import { render } from 'solid-js/web'

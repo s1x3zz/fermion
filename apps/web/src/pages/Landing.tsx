@@ -1,6 +1,7 @@
 import { createSignal, onMount, onCleanup, For, Show } from 'solid-js'
 import { A, useSearchParams, useNavigate } from '@solidjs/router'
 import { useAuthStore } from '../stores/authStore'
+import { useThemeStore, openThemePalette } from '../stores/themeStore'
 import { AuthModal } from '../components/AuthModal'
 import { toast, ToastContainer } from '../components/ui/Toast'
 import './landing.css'
@@ -32,41 +33,40 @@ interface Plan {
 
 const PLANS: Plan[] = [
   {
-    name: 'No login',
-    price: '$0',
-    period: '/mo',
-    features: ['Basic components', '1 project', 'No graphs'],
-    featured: false,
-    cta: 'Try now',
-    tag: 'GUEST',
-  },
-  {
     name: 'Free',
     price: '$0',
     period: '/mo',
-    features: ['General components', '5 projects', 'No graphs'],
+    features: ['Core components', '5 projects', 'Offline PWA'],
     featured: false,
     cta: 'Sign up free',
     tag: 'STARTER',
   },
   {
     name: 'Pro',
-    price: '$12',
-    originalPrice: '$15',
+    price: '$4.99',
     period: '/mo',
-    features: ['All components', 'Unlimited projects', 'Graphs + tables', 'Export Gerber / KiCad'],
+    features: ['All components', '20 projects', 'Graphs + tables', 'Export Gerber / KiCad'],
     featured: true,
     cta: 'Start Pro',
     tag: 'MOST POPULAR',
   },
   {
-    name: 'Team / Education',
-    price: '$5',
+    name: 'Ultimate',
+    price: '$14.99',
     period: '/mo',
-    features: ['20 projects', 'Custom libraries', 'Graphs + tables', 'Team management'],
+    features: ['Everything in Pro', 'Unlimited projects', 'Custom libraries', 'Priority support'],
+    featured: false,
+    cta: 'Start Ultimate',
+    tag: 'UNLIMITED',
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    features: ['Team management', 'SSO', 'Audit logs', 'Dedicated support'],
     featured: false,
     cta: 'Contact us',
-    tag: 'TEAM',
+    tag: 'ENTERPRISE',
   },
 ]
 
@@ -168,9 +168,14 @@ function ParticleCanvas() {
       const W = canvas.width, H = canvas.height
       ctx.clearRect(0, 0, W, H)
 
+      // Read theme vars each frame (cheap string read, cached by browser)
+      const style = getComputedStyle(document.documentElement)
+      const rgb = style.getPropertyValue('--particle-color').trim() || '59, 139, 255'
+      const speedScale = parseFloat(style.getPropertyValue('--animation-speed').trim() || '1')
+
       for (const n of nodes) {
-        n.x = (n.x + n.vx + W) % W
-        n.y = (n.y + n.vy + H) % H
+        n.x = (n.x + n.vx * speedScale + W) % W
+        n.y = (n.y + n.vy * speedScale + H) % H
       }
 
       // Build connection list — 40 nodes → max 780 pairs, fast
@@ -190,16 +195,17 @@ function ParticleCanvas() {
         ctx.beginPath()
         ctx.moveTo(ni.x, ni.y)
         ctx.lineTo(nj.x, nj.y)
-        ctx.strokeStyle = `rgba(28,28,54,${((1 - c.d / 150) * 0.88).toFixed(3)})`
+        ctx.strokeStyle = `rgba(${rgb},${((1 - c.d / 150) * 0.12).toFixed(3)})`
         ctx.lineWidth = 0.8
         ctx.stroke()
       }
 
-      // Spawn a new pulse every 3s along a random connection
-      if (time - lastPulse > 3000 && conns.length > 0) {
+      // Spawn a new pulse every 3s (scaled) along a random connection
+      const pulseInterval = 3000 / speedScale
+      if (time - lastPulse > pulseInterval && conns.length > 0) {
         lastPulse = time
         const c = conns[Math.floor(Math.random() * conns.length)]!
-        pulses.push({ a: c.i, b: c.j, t: 0, spd: 0.007 + Math.random() * 0.005 })
+        pulses.push({ a: c.i, b: c.j, t: 0, spd: (0.007 + Math.random() * 0.005) * speedScale })
       }
 
       // Animate pulses — bright trace line + traveling dot
@@ -216,7 +222,7 @@ function ParticleCanvas() {
         ctx.beginPath()
         ctx.moveTo(na.x, na.y)
         ctx.lineTo(nb.x, nb.y)
-        ctx.strokeStyle = `rgba(59,139,255,${(fade * 0.55).toFixed(3)})`
+        ctx.strokeStyle = `rgba(${rgb},${(fade * 0.55).toFixed(3)})`
         ctx.lineWidth = 1.4
         ctx.stroke()
 
@@ -224,11 +230,11 @@ function ParticleCanvas() {
         const py = na.y + (nb.y - na.y) * pulse.t
         ctx.beginPath()
         ctx.arc(px, py, 3.2, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(59,139,255,0.92)'
+        ctx.fillStyle = `rgba(${rgb},0.92)`
         ctx.fill()
         ctx.beginPath()
         ctx.arc(px, py, 8, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(59,139,255,0.16)'
+        ctx.fillStyle = `rgba(${rgb},0.16)`
         ctx.fill()
       }
 
@@ -240,13 +246,13 @@ function ParticleCanvas() {
         ctx.beginPath()
         ctx.arc(n.x, n.y, r, 0, Math.PI * 2)
         ctx.fillStyle = proximity > 0.05
-          ? `rgba(59,139,255,${(0.25 + proximity * 0.65).toFixed(3)})`
-          : 'rgba(30,30,62,0.45)'
+          ? `rgba(${rgb},${(0.25 + proximity * 0.65).toFixed(3)})`
+          : `rgba(${rgb},0.08)`
         ctx.fill()
         if (proximity > 0.28) {
           ctx.beginPath()
           ctx.arc(n.x, n.y, r + 6, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(59,139,255,${(proximity * 0.18).toFixed(3)})`
+          ctx.fillStyle = `rgba(${rgb},${(proximity * 0.18).toFixed(3)})`
           ctx.fill()
         }
       }
@@ -500,6 +506,20 @@ function SolverMetrics() {
 
 // ── Navbar ─────────────────────────────────────────────────────────────────────
 
+function ThemeButton() {
+  const { currentTheme } = useThemeStore()
+  return (
+    <button
+      class="nav-theme-btn"
+      onClick={openThemePalette}
+      title="Change theme (Ctrl+T)"
+      aria-label="Open theme palette"
+    >
+      <span class="nav-theme-dot" data-theme-preview={currentTheme()} />
+    </button>
+  )
+}
+
 function Navbar(props: { onOpenLogin: () => void; onOpenSignup: () => void }) {
   const auth = useAuthStore()
   return (
@@ -521,6 +541,7 @@ function Navbar(props: { onOpenLogin: () => void; onOpenSignup: () => void }) {
           </li>
         </ul>
         <div class="nav-ctas">
+          <ThemeButton />
           <Show
             when={auth.user()}
             fallback={
@@ -814,7 +835,7 @@ function Demo() {
   let dragging = false
   let live = true
 
-  const clamp = (v: number) => Math.max(2, Math.min(98, v))
+  const clamp = (v: number) => Math.max(5, Math.min(95, v))
 
   const getRelPos = (clientX: number) => {
     const rect = containerRef.getBoundingClientRect()
@@ -864,12 +885,14 @@ function Demo() {
           </p>
         </div>
         <div ref={containerRef} class="cmp-wrap reveal">
+          {/* Labels outside clipped panels so they are never clipped */}
+          <div class="cmp-label cmp-label-l">Schematic</div>
+          <div class="cmp-label cmp-label-r">3D Simulation</div>
           {/* Left panel — 2D schematic */}
           <div
             class="cmp-panel cmp-left"
             style={{ 'clip-path': `inset(0 ${(100 - pos()).toFixed(2)}% 0 0)` }}
           >
-            <div class="cmp-label cmp-label-l">Schematic</div>
             <SchematicView />
           </div>
           {/* Right panel — 3D simulation */}
@@ -877,7 +900,6 @@ function Demo() {
             class="cmp-panel cmp-right"
             style={{ 'clip-path': `inset(0 0 0 ${pos().toFixed(2)}%)` }}
           >
-            <div class="cmp-label cmp-label-r">3D Simulation</div>
             <View3D />
           </div>
           {/* Divider */}
@@ -903,9 +925,9 @@ function Pricing(props: { onOpenSignup: () => void }) {
   const navigate = useNavigate()
 
   const handlePlanClick = (plan: Plan) => {
-    if (plan.name === 'No login') navigate('/sim?guest=true')
-    else if (plan.name === 'Free') props.onOpenSignup()
-    else if (plan.name === 'Pro') toast.info('Payments coming soon — join the waitlist!')
+    if (plan.name === 'Free') props.onOpenSignup()
+    else if (plan.name === 'Pro' || plan.name === 'Ultimate')
+      toast.info('Payments coming soon — join the waitlist!')
     else window.location.href = 'mailto:fermiondev.io@gmail.com'
   }
 

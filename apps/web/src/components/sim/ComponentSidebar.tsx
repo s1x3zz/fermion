@@ -141,7 +141,7 @@ function Section(props: {
 export function ComponentSidebar(props: SidebarProps) {
   const [search, setSearch] = createSignal('')
 
-  const isPro = () => props.userTier() === 'pro' || props.userTier() === 'team'
+  const isPro = () => props.userTier() === 'pro' || props.userTier() === 'ultimate'
 
   function handlePlace(type: string) {
     // Stub: emit placement event — actual component placement wired up with scene interaction

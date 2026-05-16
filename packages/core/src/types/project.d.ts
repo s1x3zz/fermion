@@ -44,6 +44,6 @@ export interface FermionProject {
     circuit: import('./components').BreadboardCircuit;
     metadata: ProjectMetadata;
 }
-export type UserTier = 'guest' | 'free' | 'pro' | 'team';
+export type UserTier = 'guest' | 'free' | 'pro' | 'ultimate';
 export declare const PROJECT_LIMITS: Record<UserTier, number>;
 //# sourceMappingURL=project.d.ts.map

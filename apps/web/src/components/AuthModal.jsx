@@ -13,7 +13,7 @@ function GoogleIcon() {
 }
 export function AuthModal(props) {
     const auth = useAuthStore();
-    const [tab, setTab] = createSignal('login');
+    const [tab, setTab] = createSignal(props.initialTab ?? 'login');
     const [email, setEmail] = createSignal('');
     const [password, setPassword] = createSignal('');
     const [loading, setLoading] = createSignal(false);

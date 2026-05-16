@@ -1,0 +1,228 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Fermion Theme System — 4 themes with compat var mappings
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── SPATIAL (default, free) ─────────────────────────────────────────────── */
+:root,
+[data-theme="spatial"] {
+  color-scheme: dark;
+
+  /* Core theme vars */
+  --bg-primary:        #0a0a0f;
+  --bg-surface:        #0d0d1a;
+  --bg-card:           rgba(13,13,26,0.82);
+  --bg-surface-rgb:    13, 13, 26;
+  --text-primary:      #f0f0f8;
+  --text-secondary:    #a0a0b8;
+  --text-muted:        #505068;
+  --accent:            #3b8bff;
+  --accent-secondary:  #7c3aed;
+  --accent-glow:       rgba(59,139,255,0.4);
+  --border:            rgba(59,139,255,0.15);
+  --border-solid:      #1a1a2e;
+  --gradient-hero:     radial-gradient(ellipse at 30% 50%, rgba(59,139,255,0.15), transparent 60%),
+                       radial-gradient(ellipse at 70% 20%, rgba(124,58,237,0.1), transparent 50%);
+  --glow-intensity:    40px;
+  --glow-color:        #3b8bff;
+  --font-display:      'DM Serif Display', Georgia, serif;
+  --font-body:         'Space Grotesk', system-ui, sans-serif;
+  --animation-speed:   1;
+  --particle-color:    59, 139, 255;
+  --particle-opacity:  0.9;
+  --shadow-card:       0 4px 24px rgba(0,0,0,0.4);
+  --shadow-accent:     0 0 20px rgba(59,139,255,0.3);
+
+  /* Compat: legacy var names → theme vars */
+  --bg:        var(--bg-primary);
+  --card-bg:   var(--bg-surface);
+  --text:      var(--text-primary);
+  --muted:     var(--text-muted);
+  --blue:      var(--accent);
+  --violet:    var(--accent-secondary);
+  --violet-soft: #a78bfa;
+  --text-hi:   var(--text-primary);
+  --text-lo:   var(--text-muted);
+  --surface:   var(--bg-surface);
+  --border-c:  var(--border-solid);
+  --font-promo:  'Playfair Display', Georgia, serif;
+  --font-accent: 'Syne', sans-serif;
+  --font-ui:     var(--font-body);
+  --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+  --font:        var(--font-body);
+}
+
+/* Spatial accent overrides */
+[data-theme="spatial"][data-accent="green"] {
+  --accent:       #00d084;
+  --accent-glow:  rgba(0,208,132,0.4);
+  --glow-color:   #00d084;
+  --blue:         #00d084;
+  --shadow-accent: 0 0 20px rgba(0,208,132,0.3);
+  --particle-color: 0, 208, 132;
+}
+[data-theme="spatial"][data-accent="red"] {
+  --accent:       #ff3b5c;
+  --accent-glow:  rgba(255,59,92,0.4);
+  --glow-color:   #ff3b5c;
+  --blue:         #ff3b5c;
+  --shadow-accent: 0 0 20px rgba(255,59,92,0.3);
+  --particle-color: 255, 59, 92;
+}
+[data-theme="spatial"][data-accent="orange"] {
+  --accent:       #ff8c00;
+  --accent-glow:  rgba(255,140,0,0.4);
+  --glow-color:   #ff8c00;
+  --blue:         #ff8c00;
+  --shadow-accent: 0 0 20px rgba(255,140,0,0.3);
+  --particle-color: 255, 140, 0;
+}
+[data-theme="spatial"][data-accent="violet"] {
+  --accent:       #a855f7;
+  --accent-glow:  rgba(168,85,247,0.4);
+  --glow-color:   #a855f7;
+  --blue:         #a855f7;
+  --shadow-accent: 0 0 20px rgba(168,85,247,0.3);
+  --particle-color: 168, 85, 247;
+}
+
+/* ── ARCTIC (pro) ─────────────────────────────────────────────────────────── */
+[data-theme="arctic"] {
+  color-scheme: light;
+
+  --bg-primary:        #f8faff;
+  --bg-surface:        #eef3ff;
+  --bg-card:           rgba(255,255,255,0.92);
+  --bg-surface-rgb:    238, 243, 255;
+  --text-primary:      #0a0a1a;
+  --text-secondary:    #3a3a5a;
+  --text-muted:        #7a7aaa;
+  --accent:            #0044cc;
+  --accent-secondary:  #0099ff;
+  --accent-glow:       rgba(0,68,204,0.3);
+  --border:            rgba(0,68,204,0.18);
+  --border-solid:      #d0dcf8;
+  --gradient-hero:     radial-gradient(ellipse at center, #ffffff 0%, #c8dcff 30%, #8ab4ff 60%, #0a0a1a 100%);
+  --glow-intensity:    60px;
+  --glow-color:        #ffffff;
+  --font-display:      'Instrument Serif', Georgia, serif;
+  --font-body:         'Space Grotesk', system-ui, sans-serif;
+  --animation-speed:   0.7;
+  --particle-color:    0, 68, 204;
+  --particle-opacity:  0.7;
+  --shadow-card:       0 4px 24px rgba(0,0,64,0.1);
+  --shadow-accent:     0 0 20px rgba(0,68,204,0.2);
+
+  --bg:        var(--bg-primary);
+  --card-bg:   var(--bg-surface);
+  --text:      var(--text-primary);
+  --muted:     var(--text-muted);
+  --blue:      var(--accent);
+  --violet:    var(--accent-secondary);
+  --violet-soft: #4488ff;
+  --text-hi:   var(--text-primary);
+  --text-lo:   var(--text-muted);
+  --surface:   var(--bg-surface);
+  --border-c:  var(--border-solid);
+  --font-promo:  'Instrument Serif', Georgia, serif;
+  --font-accent: 'Syne', sans-serif;
+  --font-ui:     var(--font-body);
+  --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+  --font:        var(--font-body);
+}
+
+/* ── NEBULA (pro) ─────────────────────────────────────────────────────────── */
+[data-theme="nebula"] {
+  color-scheme: dark;
+
+  --bg-primary:        #08000f;
+  --bg-surface:        #120018;
+  --bg-card:           rgba(18,0,24,0.85);
+  --bg-surface-rgb:    18, 0, 24;
+  --text-primary:      #fff0ff;
+  --text-secondary:    #cc88ff;
+  --text-muted:        #886688;
+  --accent:            #ff2d78;
+  --accent-secondary:  #ffcc00;
+  --accent-glow:       rgba(255,45,120,0.5);
+  --border:            rgba(255,45,120,0.2);
+  --border-solid:      #2a002a;
+  --gradient-hero:     radial-gradient(ellipse at 20% 50%, rgba(255,45,120,0.3), transparent 50%),
+                       radial-gradient(ellipse at 80% 30%, rgba(255,204,0,0.2), transparent 40%),
+                       radial-gradient(ellipse at 50% 80%, rgba(124,0,255,0.3), transparent 50%);
+  --glow-intensity:    80px;
+  --glow-color:        #ff2d78;
+  --font-display:      'Playfair Display', Georgia, serif;
+  --font-body:         'Space Grotesk', system-ui, sans-serif;
+  --animation-speed:   1.3;
+  --particle-color:    255, 45, 120;
+  --particle-opacity:  0.95;
+  --shadow-card:       0 4px 24px rgba(255,0,128,0.2);
+  --shadow-accent:     0 0 30px rgba(255,45,120,0.4);
+
+  --bg:        var(--bg-primary);
+  --card-bg:   var(--bg-surface);
+  --text:      var(--text-primary);
+  --muted:     var(--text-muted);
+  --blue:      var(--accent);
+  --violet:    var(--accent-secondary);
+  --violet-soft: #ffaa44;
+  --text-hi:   var(--text-primary);
+  --text-lo:   var(--text-muted);
+  --surface:   var(--bg-surface);
+  --border-c:  var(--border-solid);
+  --font-promo:  'Playfair Display', Georgia, serif;
+  --font-accent: 'Syne', sans-serif;
+  --font-ui:     var(--font-body);
+  --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+  --font:        var(--font-body);
+}
+
+/* ── ENTERPRISE ─────────────────────────────────────────────────────────── */
+[data-theme="enterprise"] {
+  color-scheme: dark;
+
+  --bg-primary:        #080a08;
+  --bg-surface:        #0f120f;
+  --bg-card:           rgba(15,18,15,0.9);
+  --bg-surface-rgb:    15, 18, 15;
+  --text-primary:      #e8d88a;
+  --text-secondary:    #a89a5a;
+  --text-muted:        #6a5a3a;
+  --accent:            #d4a017;
+  --accent-secondary:  #8b6914;
+  --accent-glow:       rgba(212,160,23,0.4);
+  --border:            rgba(212,160,23,0.2);
+  --border-solid:      #2a2010;
+  --gradient-hero:     radial-gradient(ellipse at 50% 100%, rgba(212,160,23,0.1), transparent 60%);
+  --glow-intensity:    30px;
+  --glow-color:        #d4a017;
+  --font-display:      'Playfair Display', Georgia, serif;
+  --font-body:         'Space Grotesk', system-ui, sans-serif;
+  --animation-speed:   0.8;
+  --particle-color:    212, 160, 23;
+  --particle-opacity:  0.8;
+  --shadow-card:       0 4px 24px rgba(0,0,0,0.5);
+  --shadow-accent:     0 0 20px rgba(212,160,23,0.3);
+
+  --bg:        var(--bg-primary);
+  --card-bg:   var(--bg-surface);
+  --text:      var(--text-primary);
+  --muted:     var(--text-muted);
+  --blue:      var(--accent);
+  --violet:    var(--accent-secondary);
+  --violet-soft: #c8961a;
+  --text-hi:   var(--text-primary);
+  --text-lo:   var(--text-muted);
+  --surface:   var(--bg-surface);
+  --border-c:  var(--border-solid);
+  --font-promo:  'Playfair Display', Georgia, serif;
+  --font-accent: 'Syne', sans-serif;
+  --font-ui:     var(--font-body);
+  --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+  --font:        var(--font-body);
+}
+
+/* ── Smooth theme transitions ────────────────────────────────────────────── */
+html {
+  transition: background-color 0.28s ease, color 0.28s ease;
+}

@@ -44,11 +44,11 @@ export interface FermionProject {
   metadata: ProjectMetadata
 }
 
-export type UserTier = 'guest' | 'free' | 'pro' | 'team'
+export type UserTier = 'guest' | 'free' | 'pro' | 'ultimate'
 
 export const PROJECT_LIMITS: Record<UserTier, number> = {
   guest: 1,
   free: 5,
-  pro: Infinity,
-  team: 20,
+  pro: 20,
+  ultimate: Infinity,
 }

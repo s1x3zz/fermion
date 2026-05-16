@@ -5,13 +5,13 @@ import { useAuthStore } from '../../stores/authStore'
 
 const TIER_LIMITS = {
   free: { projects: 5, label: 'Free' },
-  pro: { projects: 'Unlimited', label: 'Pro' },
-  team: { projects: 20, label: 'Team' },
+  pro: { projects: 20, label: 'Pro' },
+  ultimate: { projects: 'Unlimited', label: 'Ultimate' },
 }
 
 export function UpgradeModal(props: { onClose: () => void }) {
   const { tier } = useAuthStore()
-  const [loading, setLoading] = createSignal<'pro' | 'team' | null>(null)
+  const [loading, setLoading] = createSignal<'pro' | 'ultimate' | null>(null)
 
   onMount(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -21,7 +21,7 @@ export function UpgradeModal(props: { onClose: () => void }) {
     onCleanup(() => document.removeEventListener('keydown', onKey))
   })
 
-  async function handleUpgrade(plan: 'pro' | 'team') {
+  async function handleUpgrade(plan: 'pro' | 'ultimate') {
     setLoading(plan)
     try {
       const { url } = await api.createCheckout(plan)
@@ -45,7 +45,7 @@ export function UpgradeModal(props: { onClose: () => void }) {
           <p style={{ margin: '0 0 20px', color: '#aaa' }}>
             You're currently on the{' '}
             <strong>{TIER_LIMITS[tier() as keyof typeof TIER_LIMITS]?.label ?? 'Free'}</strong> plan.
-            Arduino components and sketch compilation require Pro or Team.
+            Arduino components and sketch compilation require Pro or Ultimate.
           </p>
 
           <div style={{ display: 'flex', gap: '12px', 'margin-bottom': '20px' }}>
@@ -62,9 +62,9 @@ export function UpgradeModal(props: { onClose: () => void }) {
               }}
             >
               <div style={{ 'font-weight': '700', 'font-size': '1.1em' }}>Pro</div>
-              <div style={{ color: '#1976d2', 'font-size': '1.4em', 'font-weight': '700' }}>$12/mo</div>
+              <div style={{ color: '#1976d2', 'font-size': '1.4em', 'font-weight': '700' }}>$4.99/mo</div>
               <ul style={{ margin: '0', padding: '0 0 0 18px', color: '#bbb', 'font-size': '0.9em' }}>
-                <li>Unlimited projects</li>
+                <li>Up to 20 projects</li>
                 <li>Arduino simulation</li>
                 <li>Sketch compilation</li>
               </ul>
@@ -80,7 +80,7 @@ export function UpgradeModal(props: { onClose: () => void }) {
               </button>
             </div>
 
-            {/* Team plan */}
+            {/* Ultimate plan */}
             <div
               style={{
                 flex: '1',
@@ -92,20 +92,20 @@ export function UpgradeModal(props: { onClose: () => void }) {
                 gap: '8px',
               }}
             >
-              <div style={{ 'font-weight': '700', 'font-size': '1.1em' }}>Team</div>
-              <div style={{ color: '#43a047', 'font-size': '1.4em', 'font-weight': '700' }}>$5/mo</div>
+              <div style={{ 'font-weight': '700', 'font-size': '1.1em' }}>Ultimate</div>
+              <div style={{ color: '#43a047', 'font-size': '1.4em', 'font-weight': '700' }}>$14.99/mo</div>
               <ul style={{ margin: '0', padding: '0 0 0 18px', color: '#bbb', 'font-size': '0.9em' }}>
-                <li>Up to 20 projects</li>
+                <li>Unlimited projects</li>
                 <li>All Pro features</li>
-                <li>Team collaboration</li>
+                <li>Priority support</li>
               </ul>
               <button
                 class="auth-submit"
                 style={{ 'margin-top': 'auto', padding: '8px 16px', background: '#43a047' }}
                 disabled={loading() !== null}
-                onClick={() => void handleUpgrade('team')}
+                onClick={() => void handleUpgrade('ultimate')}
               >
-                <Show when={loading() === 'team'} fallback="Upgrade to Team">
+                <Show when={loading() === 'ultimate'} fallback="Upgrade to Ultimate">
                   Loading…
                 </Show>
               </button>

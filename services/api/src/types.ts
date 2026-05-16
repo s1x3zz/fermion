@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 
-export type Tier = 'guest' | 'free' | 'pro' | 'team'
+export type Tier = 'guest' | 'free' | 'pro' | 'ultimate'
 
 export interface Profile {
   id: string

@@ -12,7 +12,7 @@ billing.use('*', authMiddleware)
 
 billing.post(
   '/create-checkout',
-  zValidator('json', z.object({ tier: z.enum(['pro', 'team']) })),
+  zValidator('json', z.object({ tier: z.enum(['pro', 'ultimate']) })),
   async (c) => {
     const user = c.get('user')
     const profile = c.get('profile')
@@ -21,7 +21,7 @@ billing.post(
     const priceId =
       tier === 'pro'
         ? process.env['STRIPE_PRICE_PRO_MONTHLY']
-        : process.env['STRIPE_PRICE_TEAM_MONTHLY']
+        : process.env['STRIPE_PRICE_ULTIMATE_MONTHLY']
 
     if (!priceId) return c.json({ error: 'Price not configured' }, 500)
 

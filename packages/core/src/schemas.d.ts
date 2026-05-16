@@ -112,22 +112,22 @@ export declare const PlacedComponentSchema: z.ZodObject<{
     properties: z.ZodRecord<z.ZodString, z.ZodUnknown>;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    type: string;
     position: {
         row: string;
         col: number;
     };
+    type: string;
     rotation: 0 | 90 | 180 | 270;
     properties: Record<string, unknown>;
     label?: string | undefined;
     value?: number | undefined;
 }, {
     id: string;
-    type: string;
     position: {
         row: string;
         col: number;
     };
+    type: string;
     rotation: 0 | 90 | 180 | 270;
     properties: Record<string, unknown>;
     label?: string | undefined;
@@ -199,22 +199,22 @@ export declare const BreadboardCircuitSchema: z.ZodObject<{
         properties: z.ZodRecord<z.ZodString, z.ZodUnknown>;
     }, "strip", z.ZodTypeAny, {
         id: string;
-        type: string;
         position: {
             row: string;
             col: number;
         };
+        type: string;
         rotation: 0 | 90 | 180 | 270;
         properties: Record<string, unknown>;
         label?: string | undefined;
         value?: number | undefined;
     }, {
         id: string;
-        type: string;
         position: {
             row: string;
             col: number;
         };
+        type: string;
         rotation: 0 | 90 | 180 | 270;
         properties: Record<string, unknown>;
         label?: string | undefined;
@@ -269,11 +269,11 @@ export declare const BreadboardCircuitSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     components: {
         id: string;
-        type: string;
         position: {
             row: string;
             col: number;
         };
+        type: string;
         rotation: 0 | 90 | 180 | 270;
         properties: Record<string, unknown>;
         label?: string | undefined;
@@ -294,11 +294,11 @@ export declare const BreadboardCircuitSchema: z.ZodObject<{
 }, {
     components: {
         id: string;
-        type: string;
         position: {
             row: string;
             col: number;
         };
+        type: string;
         rotation: 0 | 90 | 180 | 270;
         properties: Record<string, unknown>;
         label?: string | undefined;
@@ -340,22 +340,22 @@ export declare const CircuitSnapshotSchema: z.ZodObject<{
             properties: z.ZodRecord<z.ZodString, z.ZodUnknown>;
         }, "strip", z.ZodTypeAny, {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
             value?: number | undefined;
         }, {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -410,11 +410,11 @@ export declare const CircuitSnapshotSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -435,11 +435,11 @@ export declare const CircuitSnapshotSchema: z.ZodObject<{
     }, {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -475,11 +475,11 @@ export declare const CircuitSnapshotSchema: z.ZodObject<{
     circuit: {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -509,11 +509,11 @@ export declare const CircuitSnapshotSchema: z.ZodObject<{
     circuit: {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -567,22 +567,22 @@ export declare const FermionProjectSchema: z.ZodObject<{
             properties: z.ZodRecord<z.ZodString, z.ZodUnknown>;
         }, "strip", z.ZodTypeAny, {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
             value?: number | undefined;
         }, {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -637,11 +637,11 @@ export declare const FermionProjectSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -662,11 +662,11 @@ export declare const FermionProjectSchema: z.ZodObject<{
     }, {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -704,11 +704,11 @@ export declare const FermionProjectSchema: z.ZodObject<{
     circuit: {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;
@@ -742,11 +742,11 @@ export declare const FermionProjectSchema: z.ZodObject<{
     circuit: {
         components: {
             id: string;
-            type: string;
             position: {
                 row: string;
                 col: number;
             };
+            type: string;
             rotation: 0 | 90 | 180 | 270;
             properties: Record<string, unknown>;
             label?: string | undefined;

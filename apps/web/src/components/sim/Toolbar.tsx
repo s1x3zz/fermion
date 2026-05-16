@@ -3,6 +3,7 @@ import { A } from '@solidjs/router'
 import { useAuthStore } from '../../stores/authStore'
 import { useProjectStore } from '../../stores/projectStore'
 import { useSimStore } from '../../stores/simStore'
+import { openThemePalette } from '../../stores/themeStore'
 import type { CameraController } from '@fermion/renderer'
 
 const REFERENCE_RADIUS = 14.4
@@ -128,6 +129,10 @@ export function Toolbar(props: ToolbarProps) {
       <div class="toolbar-section toolbar-section-right">
         <button class="toolbar-btn toolbar-btn-save" onClick={props.onSave} title="Save (Ctrl+S)">
           Save
+        </button>
+
+        <button class="toolbar-btn" onClick={openThemePalette} title="Change theme (Ctrl+T)">
+          ◐
         </button>
 
         <div class="toolbar-divider" />

@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory'
 import type { AppVariables, Tier } from '../types'
 
-const TIER_ORDER: Tier[] = ['guest', 'free', 'pro', 'team']
+const TIER_ORDER: Tier[] = ['guest', 'free', 'pro', 'ultimate']
 
 export function requireTier(minimum: Tier) {
   return createMiddleware<{ Variables: AppVariables }>(async (c, next) => {

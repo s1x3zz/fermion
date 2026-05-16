@@ -119,7 +119,7 @@ export function getAuthSnapshot() {
   return _store.getState()
 }
 
-const TIER_ORDER: Tier[] = ['guest', 'free', 'pro', 'team']
+const TIER_ORDER: Tier[] = ['guest', 'free', 'pro', 'ultimate']
 
 /** Returns true if the current user's tier meets or exceeds `minimum`. */
 export function usesTier(minimum: Tier): boolean {

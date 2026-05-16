@@ -4,10 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fermion — 3D Circuit Simulator</title>
+    <script>
+      (function () {
+        var t = localStorage.getItem('fermion-theme') || 'spatial'
+        var a = localStorage.getItem('fermion-accent') || 'blue'
+        var bgs = { spatial: '#0a0a0f', arctic: '#f8faff', nebula: '#08000f', enterprise: '#080a08' }
+        document.documentElement.setAttribute('data-theme', t)
+        if (t === 'spatial') document.documentElement.setAttribute('data-accent', a)
+        document.documentElement.style.background = bgs[t] || '#0a0a0f'
+      })()
+    </script>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html { background: #0a0a0f; }
-      body { background: #0a0a0f; }
       #root { width: 100%; }
     </style>
   </head>

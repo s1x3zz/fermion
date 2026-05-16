@@ -94,7 +94,7 @@ function Section(props) {
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 export function ComponentSidebar(props) {
     const [search, setSearch] = createSignal('');
-    const isPro = () => props.userTier() === 'pro' || props.userTier() === 'team';
+    const isPro = () => props.userTier() === 'pro' || props.userTier() === 'ultimate';
     function handlePlace(type) {
         // Stub: emit placement event — actual component placement wired up with scene interaction
         console.log('[ComponentSidebar] place:', type);

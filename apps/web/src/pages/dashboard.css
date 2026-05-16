@@ -2,9 +2,9 @@
 
 .dashboard {
   min-height: 100vh;
-  background: #0a0a0f;
-  color: #e2e8f0;
-  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body, 'Space Grotesk', system-ui, sans-serif);
 }
 
 .dashboard-nav {
@@ -16,7 +16,7 @@
   justify-content: space-between;
   padding: 0 2rem;
   height: 60px;
-  background: rgba(10, 10, 15, 0.85);
+  background: rgba(var(--bg-surface-rgb), 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -30,7 +30,7 @@
 }
 
 .dashboard-nav-brand span {
-  color: #7c6aff;
+  color: var(--accent);
 }
 
 .dashboard-nav-right {
@@ -41,7 +41,7 @@
 
 .dashboard-user-email {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -201,8 +201,8 @@
 /* ── New-project card ───────────────────────────────────────────────────────── */
 
 .project-card-new {
-  background: rgba(124, 106, 255, 0.05);
-  border: 1px dashed rgba(124, 106, 255, 0.3);
+  background: var(--accent-glow);
+  border: 1px dashed var(--border);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -211,15 +211,16 @@
   gap: 0.5rem;
   min-height: 180px;
   cursor: pointer;
-  color: #7c6aff;
+  color: var(--accent);
   font-size: 0.875rem;
   font-weight: 500;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .project-card-new:hover {
-  background: rgba(124, 106, 255, 0.1);
-  border-color: rgba(124, 106, 255, 0.5);
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  opacity: 0.85;
 }
 
 .project-card-new-icon {
@@ -272,12 +273,12 @@
 }
 
 .btn-primary {
-  background: #7c6aff;
+  background: var(--accent);
   color: #fff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #9585ff;
+  opacity: 0.85;
 }
 
 .btn-outline {
@@ -338,7 +339,7 @@
 }
 
 .sync-toggle input[type='checkbox']:checked {
-  background: #7c6aff;
+  background: var(--accent);
   border-color: transparent;
 }
 
@@ -372,7 +373,7 @@
 }
 
 .modal {
-  background: #13121d;
+  background: var(--bg-surface);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 14px;
   padding: 2rem;

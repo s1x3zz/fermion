@@ -1,4 +1,4 @@
-export type Tier = 'guest' | 'free' | 'pro' | 'team';
+export type Tier = 'guest' | 'free' | 'pro' | 'ultimate';
 export interface Profile {
     id: string;
     email: string;
@@ -25,7 +25,7 @@ export declare const api: {
         metadata: Record<string, unknown>;
     }): Promise<void>;
     deleteProject(id: string): Promise<void>;
-    createCheckout(tier: "pro" | "team"): Promise<{
+    createCheckout(tier: "pro" | "ultimate"): Promise<{
         url: string;
     }>;
     createPortal(): Promise<{

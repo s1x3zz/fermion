@@ -320,7 +320,7 @@ export default function Simulator() {
   }
 
   function handleOpenSketch(id: string) {
-    if (userTier() === 'pro' || userTier() === 'team') {
+    if (userTier() === 'pro' || userTier() === 'ultimate') {
       setSketchEditorTarget(id)
     } else {
       setShowUpgradeModal(true)

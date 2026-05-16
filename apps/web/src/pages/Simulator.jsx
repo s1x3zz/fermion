@@ -294,7 +294,7 @@ export default function Simulator() {
         }
     }
     function handleOpenSketch(id) {
-        if (userTier() === 'pro' || userTier() === 'team') {
+        if (userTier() === 'pro' || userTier() === 'ultimate') {
             setSketchEditorTarget(id);
         }
         else {

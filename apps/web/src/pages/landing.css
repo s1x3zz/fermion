@@ -1,23 +1,7 @@
 /* ── Google Fonts ────────────────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Space+Grotesk:wght@400;500;600&family=Syne:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Font variables ──────────────────────────────────────────────────────────── */
-:root {
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-promo: 'Playfair Display', Georgia, serif;
-  --font-accent: 'Syne', sans-serif;
-  --font-ui: 'Space Grotesk', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-
-  /* Color shortcuts */
-  --blue: #3b8bff;
-  --violet: #7c3aed;
-  --violet-soft: #a78bfa;
-  --surface: #0d0d1a;
-  --border-c: #1a1a2e;
-  --text-hi: #f0f0f8;
-  --text-lo: #6b7280;
-}
+/* ── Font variables (color shortcuts come from themes.css) ───────────────────── */
 
 /* ── Reveal animation ────────────────────────────────────────────────────────── */
 .reveal {
@@ -49,7 +33,7 @@
 
 /* ── Layout helpers ──────────────────────────────────────────────────────────── */
 .l-inner {
-  max-width: 1160px;
+  max-width: 1200px;
   margin-inline: auto;
   padding-inline: clamp(20px, 5vw, 48px);
 }
@@ -73,7 +57,7 @@
   gap: 0;
   max-width: 900px;
   width: calc(100% - 40px);
-  background: rgba(13, 13, 26, 0.72);
+  background: rgba(var(--bg-surface-rgb), 0.72);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(59, 139, 255, 0.15);
@@ -121,6 +105,30 @@
   align-items: center;
   gap: 8px;
   margin-left: auto;
+}
+
+.nav-theme-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border, rgba(59,139,255,0.2));
+  background: rgba(var(--bg-surface-rgb), 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.18s, transform 0.14s;
+  padding: 0;
+}
+.nav-theme-btn:hover { border-color: var(--accent); transform: scale(1.08); }
+
+.nav-theme-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: block;
+  transition: background 0.28s;
 }
 
 .nav-email {
@@ -256,7 +264,7 @@
   font-family: var(--font-ui);
   font-size: clamp(0.95rem, 1.6vw, 1.15rem);
   line-height: 1.65;
-  color: #9090b8;
+  color: var(--text-secondary);
   max-width: 520px;
   margin: 0 0 36px;
 }
@@ -1063,7 +1071,7 @@
 .plan-list li {
   font-family: var(--font-ui);
   font-size: 0.85rem;
-  color: #9090b8;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 8px;

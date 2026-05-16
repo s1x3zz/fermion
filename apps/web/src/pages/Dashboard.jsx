@@ -3,6 +3,7 @@ import { Portal } from 'solid-js/web';
 import { useNavigate, A } from '@solidjs/router';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore, ProjectLimitError } from '../stores/projectStore';
+import { openThemePalette } from '../stores/themeStore';
 import { PROJECT_LIMITS } from '@fermion/core';
 import './dashboard.css';
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -144,7 +145,7 @@ export default function Dashboard() {
     const [deleteTarget, setDeleteTarget] = createSignal(null);
     onMount(() => { store.loadProjects(); });
     const tier = () => getUserTierLabel(auth.user);
-    const isPaidUser = () => tier() === 'pro' || tier() === 'team';
+    const isPaidUser = () => tier() === 'pro' || tier() === 'ultimate';
     const isGuest = () => auth.isGuest();
     async function handleCreate(name, description) {
         try {
@@ -218,6 +219,9 @@ export default function Dashboard() {
           <Show when={auth.user()}>
             <span class="dashboard-user-email">{auth.user()?.email}</span>
           </Show>
+          <button class="btn btn-outline" onClick={openThemePalette} title="Change theme (Ctrl+T)" style={{ padding: '0.35rem 0.7rem', 'border-radius': '50%', width: '34px', height: '34px' }}>
+            ◐
+          </button>
           <button class="btn btn-outline" onClick={handleSignOut}>Sign out</button>
         </div>
       </nav>
